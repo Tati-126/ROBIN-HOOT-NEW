@@ -10,7 +10,7 @@ import {
   registrar,
   perfil,
 } from "../controllers/usuarioController.js";
-import { verificarToken } from "../middlewares/auth.js";
+import { verificarToken, autorizarRoles, autorizarPropioOAdmin } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -134,9 +134,9 @@ router.get("/perfil", verificarToken, perfil);
  *       400:
  *         description: Datos inválidos
  */
-router.get("/", obtenerUsuarios);
-router.get("/:id", obtenerUsuarioPorId);
-router.post("/", crearUsuario);
+router.get("/", verificarToken, autorizarRoles("ADMIN"), obtenerUsuarios);
+router.get("/:id", verificarToken, autorizarRoles("ADMIN"), obtenerUsuarioPorId);
+router.post("/", verificarToken, autorizarRoles("ADMIN"), crearUsuario);
 
 /**
  * @swagger
@@ -186,8 +186,8 @@ router.post("/", crearUsuario);
  *       404:
  *         description: Usuario no encontrado
  */
-router.put("/:id", actualizarUsuario);
-router.patch("/:id/cambiar-contraseña", cambiarContraseña);
-router.delete("/:id", eliminarUsuario);
+router.put("/:id", verificarToken, autorizarPropioOAdmin("id"), actualizarUsuario);
+router.patch("/:id/cambiar-contraseña", verificarToken, autorizarPropioOAdmin("id"), cambiarContraseña);
+router.delete("/:id", verificarToken, autorizarRoles("ADMIN"), eliminarUsuario);
 
 export default router;
