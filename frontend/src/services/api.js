@@ -1,15 +1,24 @@
 // ─── Configuración de API ───────────────────────────────────────────────────────
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+
+const buildApiUrl = (path) => `${BACKEND_URL}${path}`;
+
+const fetchApi = (path, options = {}) => {
+  return fetch(buildApiUrl(path), {
+    credentials: "include",
+    ...options,
+  });
+};
 
 /**
  * PERSONA 1: Función para obtener el ranking del backend
  * TODO: Agregar manejo de errores y validación de datos
  */
 export const getBackendData = async () => {
-  console.log(`[API] Solicitando datos de: ${BACKEND_URL}/api/ranking`);
+  console.log(`[API] Solicitando datos de: ${buildApiUrl("/api/ranking")}`);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/ranking`);
+    const response = await fetchApi("/api/ranking");
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -22,10 +31,10 @@ export const getBackendData = async () => {
  * Función para hacer POST al backend
  */
 export const postToBackend = async (data) => {
-  console.log(`[API] Enviando POST a: ${BACKEND_URL}/api/game`, data);
+  console.log(`[API] Enviando POST a: ${buildApiUrl("/api/game")}`, data);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/game`, {
+    const response = await fetchApi("/api/game", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -47,7 +56,7 @@ export const registrarUsuario = async (nombre, email, password) => {
   console.log(`[API] Registrando usuario: ${email}`);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/usuarios/auth/registrar`, {
+    const response = await fetchApi("/api/usuarios/auth/registrar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nombre, email, password }),
@@ -72,7 +81,7 @@ export const loginUsuario = async (email, password) => {
   console.log(`[API] Login usuario: ${email}`);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/usuarios/auth/login`, {
+    const response = await fetchApi("/api/usuarios/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -109,7 +118,7 @@ export const obtenerPerfil = async () => {
   console.log(`[API] Obteniendo perfil del usuario`);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/usuarios/perfil`, {
+    const response = await fetchApi("/api/usuarios/perfil", {
       method: "GET",
       headers: { 
         "Content-Type": "application/json",
@@ -142,7 +151,7 @@ export const logout = () => {
  */
 export const crearSesion = async (juegoId, creadorId) => {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/sessions/start`, {
+    const response = await fetchApi("/api/sessions/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ juegoId, creadorId }),
@@ -163,7 +172,7 @@ export const crearSesion = async (juegoId, creadorId) => {
  */
 export const unirseASesion = async (pin, nickname, usuarioId) => {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/sessions/join`, {
+    const response = await fetchApi("/api/sessions/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin, nickname, usuarioId }),

@@ -22,16 +22,22 @@ import errorHandler from "./middlewares/errorHandler.js";
 const app = express();
 
 // ── CORS: habilita peticiones desde el frontend local ─────────────────────────
-const allowedOrigins = [
-  "http://localhost:5173",
+const allowedOrigins = new Set([
   "http://localhost:3000",
-];
+  "http://localhost:4173",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+]);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Permite llamadas sin origin (Postman, curl) y orígenes permitidos
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: origen no permitido – ${origin}`));
