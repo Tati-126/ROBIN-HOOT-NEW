@@ -20,6 +20,12 @@ const options = {
           name: "token",
           description: "Token JWT almacenado en cookie HTTP-only. Se setea automáticamente al hacer login.",
         },
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "Token JWT enviado en el header Authorization: Bearer <token>",
+        },
       },
       schemas: {
         Usuario: {
@@ -39,6 +45,40 @@ const options = {
             nombre: { type: "string", example: "Ciencias" },
             descripcion: { type: "string", example: "Preguntas de ciencias naturales" },
             fechaCreacion: { type: "string", format: "date-time" },
+          },
+        },
+        Juego: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d12" },
+            titulo: { type: "string", example: "Quiz de Matemáticas" },
+            descripcion: { type: "string", example: "Juego de preguntas sobre álgebra" },
+            creadorId: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d0e" },
+            estado: { type: "string", enum: ["BORRADOR", "PUBLICADO"], example: "BORRADOR" },
+            fechaCreacion: { type: "string", format: "date-time" },
+          },
+        },
+        Pregunta: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d13" },
+            enunciado: { type: "string", example: "¿Cuánto es 2 + 2?" },
+            tipo: { type: "string", enum: ["multiple", "verdadero/falso"], example: "multiple" },
+            tiempoLimite: { type: "number", example: 20 },
+            juegoId: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d12" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        OpcionRespuesta: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d14" },
+            texto: { type: "string", example: "4" },
+            esCorrecta: { type: "boolean", example: true },
+            preguntaId: { type: "string", example: "664f1b2c3d4e5f6a7b8c9d13" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
           },
         },
         Producto: {

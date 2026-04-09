@@ -31,7 +31,7 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [titulo, categoriaId]
+ *             required: [titulo, creadorId]
  *             properties:
  *               titulo:
  *                 type: string
@@ -39,12 +39,15 @@
  *               descripcion:
  *                 type: string
  *                 example: Juego de preguntas sobre álgebra
- *               categoriaId:
+ *               creadorId:
  *                 type: string
+ *                 description: ID del usuario creador (ADMIN o DOCENTE)
  *                 example: 64a1b2c3d4e5f6a7b8c9d0e1
- *               tiempoLimite:
- *                 type: number
- *                 example: 30
+ *               estado:
+ *                 type: string
+ *                 enum: [BORRADOR, PUBLICADO]
+ *                 default: BORRADOR
+ *                 example: BORRADOR
  *     responses:
  *       201:
  *         description: Juego creado exitosamente

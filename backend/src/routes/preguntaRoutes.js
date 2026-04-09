@@ -35,20 +35,22 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [enunciado, juegoId]
+ *             required: [enunciado, tipo, tiempoLimite, juegoId]
  *             properties:
  *               enunciado:
  *                 type: string
  *                 example: ¿Cuánto es 2 + 2?
+ *               tipo:
+ *                 type: string
+ *                 enum: [multiple, verdadero/falso]
+ *                 example: multiple
+ *               tiempoLimite:
+ *                 type: number
+ *                 description: Tiempo en segundos (mínimo 1)
+ *                 example: 20
  *               juegoId:
  *                 type: string
  *                 example: 64a1b2c3d4e5f6a7b8c9d0e1
- *               tiempoLimite:
- *                 type: number
- *                 example: 20
- *               puntaje:
- *                 type: number
- *                 example: 100
  *     responses:
  *       201:
  *         description: Pregunta creada exitosamente
