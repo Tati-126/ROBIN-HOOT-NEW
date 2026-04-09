@@ -25,6 +25,7 @@
  *     tags: [Productos]
  *     security:
  *       - cookieAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -77,6 +78,7 @@
  *     tags: [Productos]
  *     security:
  *       - cookieAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -100,6 +102,7 @@
  *     tags: [Productos]
  *     security:
  *       - cookieAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path

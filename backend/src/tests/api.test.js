@@ -50,6 +50,14 @@ describe("GET /api/usuarios/perfil (protegido)", () => {
   });
 });
 
+// ── Test 4: Ranking protegido (Tarea de Niyerieth) ─────────────────────────────
+describe("GET /api/ranking (protegido)", () => {
+  it("debe retornar 401 si no hay autenticación", async () => {
+    const res = await request(app).get("/api/ranking");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
 // ── Test 4: Ruta inexistente ──────────────────────────────────────────────────
 describe("GET /ruta-que-no-existe", () => {
   it("debe retornar 404", async () => {
