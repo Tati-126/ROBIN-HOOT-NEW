@@ -6,14 +6,14 @@ import {
   actualizarJuego,
   eliminarJuego,
 } from "../controllers/juegoController.js";
-import { verificarToken } from "../middlewares/auth.js";
+import { verificarToken, autorizarRoles } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.get("/", obtenerJuegos);
 router.get("/:id", obtenerJuego);
-router.post("/", verificarToken, crearJuego);
-router.put("/:id", verificarToken, actualizarJuego);
-router.delete("/:id", verificarToken, eliminarJuego);
+router.post("/", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), crearJuego);
+router.put("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), actualizarJuego);
+router.delete("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), eliminarJuego);
 
 export default router;

@@ -117,14 +117,14 @@ import {
   actualizarCategoria,
   eliminarCategoria,
 } from "../controllers/categoriaController.js";
-import { verificarToken } from "../middlewares/auth.js";
+import { verificarToken, autorizarRoles } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.get("/", obtenerCategorias);
 router.get("/:id", obtenerCategoria);
-router.post("/", verificarToken, crearCategoria);
-router.put("/:id", verificarToken, actualizarCategoria);
-router.delete("/:id", verificarToken, eliminarCategoria);
+router.post("/", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), crearCategoria);
+router.put("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), actualizarCategoria);
+router.delete("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), eliminarCategoria);
 
 export default router;

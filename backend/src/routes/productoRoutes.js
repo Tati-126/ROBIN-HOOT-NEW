@@ -120,14 +120,17 @@ import {
   crearProducto,
   obtenerProductos,
   obtenerProducto,
+  actualizarProducto,
   eliminarProducto,
 } from "../controllers/productoController.js";
+import { verificarToken, autorizarRoles } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/", crearProducto);
+router.post("/", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), crearProducto);
 router.get("/", obtenerProductos);
 router.get("/:id", obtenerProducto);
-router.delete("/:id", eliminarProducto);
+router.put("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), actualizarProducto);
+router.delete("/:id", verificarToken, autorizarRoles("ADMIN", "DOCENTE"), eliminarProducto);
 
 export default router;
