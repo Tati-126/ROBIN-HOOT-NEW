@@ -1,0 +1,56 @@
+import { forwardRef } from "react";
+
+/**
+ * FormInput - Input reutilizable con soporte para errores
+ * Compatible con React Hook Form via forwardRef
+ */
+const FormInput = forwardRef(function FormInput(
+  { label, type = "text", placeholder, error, ...rest },
+  ref
+) {
+  const wrapperStyle = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  };
+
+  const labelStyle = {
+    color: "#37474f",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+  };
+
+  const inputStyle = {
+    padding: "12px 14px",
+    borderRadius: "6px",
+    border: error ? "1px solid #d32f2f" : "1px solid #cfd8dc",
+    backgroundColor: "#ffffff",
+    color: "#263238",
+    fontSize: "0.95rem",
+    outline: "none",
+    transition: "border-color 0.3s",
+    width: "100%",
+  };
+
+  const errorStyle = {
+    color: "#d32f2f",
+    fontSize: "0.8rem",
+    marginTop: "2px",
+  };
+
+  return (
+    <div style={wrapperStyle}>
+      {label && <label style={labelStyle}>{label}</label>}
+      <input
+        ref={ref}
+        type={type}
+        placeholder={placeholder}
+        style={inputStyle}
+        {...rest}
+      />
+      {error && <span style={errorStyle}>{error}</span>}
+    </div>
+  );
+});
+
+export default FormInput;

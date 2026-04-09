@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: .
+    container_name: robinhoot-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - PORT=5000
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - robinhoot-net
+
+  mongo:
+    image: mongo:7
+    container_name: robinhoot-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - robinhoot-net
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+
+
+networks:
+  robinhoot-net:
+    driver: bridge
