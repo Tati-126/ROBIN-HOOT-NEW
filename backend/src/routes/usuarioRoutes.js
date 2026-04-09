@@ -110,6 +110,8 @@ router.get("/perfil", verificarToken, perfil);
  *   get:
  *     summary: Obtener todos los usuarios
  *     tags: [Usuarios]
+ *     security:
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: Lista de usuarios
@@ -119,9 +121,15 @@ router.get("/perfil", verificarToken, perfil);
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Usuario'
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
  *   post:
  *     summary: Crear usuario (admin)
  *     tags: [Usuarios]
+ *     security:
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -133,16 +141,20 @@ router.get("/perfil", verificarToken, perfil);
  *         description: Usuario creado
  *       400:
  *         description: Datos inválidos
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
  */
 router.get("/", verificarToken, autorizarRoles("ADMIN"), obtenerUsuarios);
-router.get("/:id", verificarToken, autorizarRoles("ADMIN"), obtenerUsuarioPorId);
+router.get("/:id", verificarToken, autorizarPropioOAdmin("id"), obtenerUsuarioPorId);
 router.post("/", verificarToken, autorizarRoles("ADMIN"), crearUsuario);
 
 /**
  * @swagger
  * /api/usuarios/{id}:
  *   put:
- *     summary: Actualizar usuario
+ *     summary: Actualizar usuario propio o como admin
  *     tags: [Usuarios]
  *     security:
  *       - cookieAuth: []
@@ -165,10 +177,32 @@ router.post("/", verificarToken, autorizarRoles("ADMIN"), crearUsuario);
  *         description: Usuario actualizado
  *       401:
  *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
+ *       404:
+ *         description: Usuario no encontrado
+ *   get:
+ *     summary: Obtener usuario propio o como admin
+ *     tags: [Usuarios]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Usuario encontrado
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
  *       404:
  *         description: Usuario no encontrado
  *   delete:
- *     summary: Eliminar usuario
+ *     summary: Eliminar usuario (solo admin)
  *     tags: [Usuarios]
  *     security:
  *       - cookieAuth: []
@@ -183,10 +217,48 @@ router.post("/", verificarToken, autorizarRoles("ADMIN"), crearUsuario);
  *         description: Usuario eliminado
  *       401:
  *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
  *       404:
  *         description: Usuario no encontrado
  */
 router.put("/:id", verificarToken, autorizarPropioOAdmin("id"), actualizarUsuario);
+
+/**
+ * @swagger
+ * /api/usuarios/{id}/cambiar-contrase\u00f1a:
+ *   patch:
+ *     summary: Cambiar contrase\u00f1a propia o como admin
+ *     tags: [Usuarios]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contrase\u00f1aActual:
+ *                 type: string
+ *               contrase\u00f1aNueva:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Contrase\u00f1a actualizada
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos
+ *       404:
+ *         description: Usuario no encontrado
+ */
 router.patch("/:id/cambiar-contraseña", verificarToken, autorizarPropioOAdmin("id"), cambiarContraseña);
 router.delete("/:id", verificarToken, autorizarRoles("ADMIN"), eliminarUsuario);
 

@@ -266,9 +266,15 @@ export const actualizarUsuario = async (req, res) => {
 export const cambiarContraseña = async (req, res) => {
   try {
     const { contraseñaActual, contraseñaNueva } = req.body;
+    const esAdmin = req.userRol === "ADMIN";
+    const esMismoUsuario = req.userId === req.params.id;
 
-    if (!contraseñaActual || !contraseñaNueva) {
-      return res.status(400).json({ mensaje: "Las contraseñas son requeridas" });
+    if (!contraseñaNueva) {
+      return res.status(400).json({ mensaje: "La contraseña nueva es requerida" });
+    }
+
+    if (esMismoUsuario && !contraseñaActual) {
+      return res.status(400).json({ mensaje: "La contraseña actual es requerida" });
     }
 
     const usuario = await Usuario.findById(req.params.id);
@@ -276,16 +282,16 @@ export const cambiarContraseña = async (req, res) => {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    // Verificar contraseña actual
-    const contraseñaValida = await bcrypt.compare(
-      contraseñaActual,
-      usuario.contraseña
-    );
-    if (!contraseñaValida) {
-      return res.status(400).json({ mensaje: "Contraseña actual incorrecta" });
+    if (!esAdmin || esMismoUsuario) {
+      const contraseñaValida = await bcrypt.compare(
+        contraseñaActual,
+        usuario.contraseña
+      );
+      if (!contraseñaValida) {
+        return res.status(400).json({ mensaje: "Contraseña actual incorrecta" });
+      }
     }
 
-    // Encriptar nueva contraseña
     const salt = await bcrypt.genSalt(10);
     const nuevaContraseña = await bcrypt.hash(contraseñaNueva, salt);
 
