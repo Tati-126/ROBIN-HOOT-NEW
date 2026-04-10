@@ -18,13 +18,17 @@ const options = {
           type: "apiKey",
           in: "cookie",
           name: "token",
-          description: "Token JWT almacenado en cookie HTTP-only. Se setea automáticamente al hacer login.",
+          description:
+            "Token JWT en cookie HTTP-only. Se setea automáticamente al hacer login. " +
+            "⚠️ Los navegadores no pueden enviar cookies HTTP-only desde Swagger UI — usa bearerAuth para probar endpoints protegidos.",
         },
         bearerAuth: {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Token JWT enviado en el header Authorization: Bearer <token>",
+          description:
+            "Token JWT en el header Authorization: Bearer <token>. " +
+            "Haz login primero, copia el token de la respuesta, luego haz clic en 'Authorize' e ingrésalo aquí.",
         },
       },
       schemas: {

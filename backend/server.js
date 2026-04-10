@@ -28,5 +28,6 @@ connectDB().then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
     console.log(`Socket.io activo en ws://localhost:${PORT}`);
+    console.log(`Swagger docs en   http://localhost:${PORT}/api-docs`);
   });
 });
