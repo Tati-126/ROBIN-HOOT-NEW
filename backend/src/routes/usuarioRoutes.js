@@ -7,6 +7,7 @@ import {
   cambiarContraseña,
   eliminarUsuario,
   login,
+  logout,
   registrar,
   perfil,
 } from "../controllers/usuarioController.js";
@@ -83,6 +84,21 @@ router.post("/auth/registrar", registrar);
  *         description: Credenciales inválidas o faltan campos
  */
 router.post("/auth/login", login);
+
+/**
+ * @swagger
+ * /api/usuarios/auth/logout:
+ *   post:
+ *     summary: Cerrar sesión (elimina la cookie JWT)
+ *     tags: [Usuarios]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada correctamente
+ */
+router.post("/auth/logout", logout);
 
 /**
  * @swagger

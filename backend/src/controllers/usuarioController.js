@@ -117,6 +117,16 @@ export const login = async (req, res) => {
   }
 };
 
+// Logout
+export const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
+  res.json({ message: "Sesión cerrada correctamente" });
+};
+
 // Perfil
 export const perfil = async (req, res) => {
   try {
