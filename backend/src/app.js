@@ -16,6 +16,7 @@ import opcionRespuestaRoutes from "./routes/opcionRespuestaRoutes.js";
 import juegoRoutes from "./routes/juegoRoutes.js";
 import rankingRoutes from "./routes/rankingRoutes.js";
 import rolRoutes from "./routes/rolRoutes.js";
+import setupRoutes from "./routes/setupRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 
@@ -102,6 +103,7 @@ app.use("/api/opciones", opcionRespuestaRoutes);
 app.use("/api/juegos", juegoRoutes);
 app.use("/api/ranking", rankingRoutes);
 app.use("/api/roles", rolRoutes);
+app.use("/api/setup", setupRoutes);
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
