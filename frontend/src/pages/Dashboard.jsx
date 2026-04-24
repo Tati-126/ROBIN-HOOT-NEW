@@ -6,6 +6,7 @@ import MyButton from "../components/ui/MyButton";
 import RankingTable from "../components/RankingTable";
 import GameBoard from "../components/GameBoard";
 import CrearSesion from "../components/CrearSesion.jsx";
+import ImportarTrivia from "../components/ImportarTrivia.jsx";
 import { useNavigate } from "react-router-dom";
 import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket } from "lucide-react";
 
@@ -80,6 +81,8 @@ export default function Dashboard() {
         <GameBoard />
         {/* Crear Partida (docente) */}
         <CrearSesion />
+        {/* Importar preguntas desde OpenTDB */}
+        <ImportarTrivia />
       </div>
 
       <h2 style={{ fontSize: "2.2rem", fontWeight: "900", color: "var(--color-primary)", marginBottom: "32px", display: "flex", alignItems: "center" }}>
