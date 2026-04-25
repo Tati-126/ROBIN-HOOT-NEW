@@ -10,6 +10,12 @@ import CustomCard from "./ui/CustomCard";
 import MyButton from "./ui/MyButton";
 import { Hash, AlertCircle, Users, Trophy } from "lucide-react";
 
+/** Retorna el emoji de medalla para el top 3 */
+const getMedal = (index) => {
+  const medals = ["🥇", "🥈", "🥉"];
+  return medals[index] ?? null;
+};
+
 /**
  * GameBoard - Unirse a una partida por PIN con sala de espera en tiempo real
  */
@@ -19,7 +25,7 @@ export default function GameBoard() {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [sesion, setSesion] = useState(null); // { sessionId, participantId, juegoId }
+  const [sesion, setSesion] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [iniciada, setIniciada] = useState(false);
   const [preguntasJuego, setPreguntasJuego] = useState([]);
@@ -108,41 +114,17 @@ export default function GameBoard() {
         title={iniciada ? "¡Partida en Curso!" : "Sala de Espera"}
       >
         <div style={{ textAlign: "center" }}>
-          {!iniciada ? (
-            <>
-              <div style={{
-                display: "inline-block", padding: "10px 28px",
-                backgroundColor: "var(--color-kahoot-yellow)",
-                borderRadius: "50px", fontWeight: "900", color: "#fff",
-                marginBottom: "16px", fontSize: "1.1rem"
-              }}>
-                {nickname}
-              </div>
-              <p style={{ color: "var(--color-text-muted)", marginBottom: "20px" }}>
-                Esperando que el docente inicie el juego...
-              </p>
-              {ranking.length > 0 && (
-                <div style={{ textAlign: "left" }}>
-                  <p style={{ fontWeight: "700", marginBottom: "10px", textAlign: "center" }}>
-                    Participantes ({ranking.length}):
-                  </p>
-                  {ranking.map((p, idx) => (
-                    <div key={p.participantId || idx} style={{
-                      padding: "8px 14px", marginBottom: "6px",
-                      backgroundColor: "#f5f5f5", borderRadius: "8px", fontWeight: "600"
-                    }}>
-                      {p.nombre}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <p style={{ fontSize: "1.2rem", fontWeight: "900", color: "var(--color-primary)", marginBottom: "20px" }}>
-                ¡El juego ha comenzado!
-              </p>
+          {/* Badge prominente con el nickname del jugador */}
+          <div className="player-badge">
+            <Trophy size={20} />
+            <span>{nickname}</span>
+          </div>
 
+          {iniciada ? (
+            <>
+              <p className="session-active-header">¡El juego ha comenzado!</p>
+
+              {/* Área de preguntas — Persona 3 refactorizará esta sección */}
               {cargandoPreguntas ? (
                 <p style={{ marginBottom: "18px", color: "var(--color-text-muted)" }}>
                   Cargando preguntas...
@@ -194,18 +176,62 @@ export default function GameBoard() {
                 </div>
               )}
 
-              {ranking.map((p, idx) => (
-                <div key={p.participantId || idx} style={{
-                  display: "flex", justifyContent: "space-between",
-                  padding: "10px 14px", marginBottom: "6px",
-                  backgroundColor: p.nombre === nickname ? "rgba(27,94,32,0.12)" : "#f5f5f5",
-                  borderRadius: "10px", fontWeight: "600",
-                  border: p.nombre === nickname ? "2px solid var(--color-primary)" : "2px solid transparent"
-                }}>
-                  <span>#{idx + 1} {p.nombre}{p.nombre === nickname ? " (tú)" : ""}</span>
-                  <span style={{ fontWeight: "900" }}>{p.puntaje} pts</span>
-                </div>
-              ))}
+              {/* Ranking en tiempo real con top 3 destacado */}
+              {ranking.length > 0 && (
+                <>
+                  <p className="ranking-section-title">Ranking en vivo</p>
+                  <div className="ranking-list">
+                    {ranking.map((p, idx) => {
+                      const isTop3 = idx < 3;
+                      const isCurrent = p.nombre === nickname;
+                      const medal = getMedal(idx);
+                      return (
+                        <div
+                          key={p.participantId || idx}
+                          className={[
+                            "ranking-item",
+                            isTop3 ? "top-three" : "",
+                            isCurrent ? "current-player" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          <span className="ranking-player-name">
+                            {medal && <span className="ranking-medal">{medal}</span>}
+                            #{idx + 1} {p.nombre}
+                            {isCurrent && (
+                              <span style={{ fontSize: "0.8rem", marginLeft: "6px", opacity: 0.7 }}>
+                                (tú)
+                              </span>
+                            )}
+                          </span>
+                          <span className="ranking-player-score">{p.puntaje} pts</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <p style={{ color: "var(--color-text-muted)", marginBottom: "20px" }}>
+                Esperando que el docente inicie el juego...
+              </p>
+              {ranking.length > 0 && (
+                <>
+                  <p style={{ fontWeight: "700", marginBottom: "10px", textAlign: "center" }}>
+                    Participantes ({ranking.length}):
+                  </p>
+                  <div className="waiting-room-list">
+                    {ranking.map((p, idx) => (
+                      <div key={p.participantId || idx} className="waiting-room-item">
+                        {p.nombre}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
