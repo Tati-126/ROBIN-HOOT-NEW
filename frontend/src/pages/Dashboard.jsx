@@ -40,16 +40,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard" style={{ padding: "60px 20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <div className="dashboard-header" style={{ marginBottom: "60px", textAlign: "center" }}>
-        <h1 style={{ fontSize: "3rem", fontWeight: "900", color: "var(--color-primary)", letterSpacing: "-0.02em" }}>
-          Hola, {usuario?.nombre || "Usuario"}! <Gamepad2 size={48} style={{ verticalAlign: "middle", marginLeft: "12px", color: "var(--color-primary-glow)" }} />
+    <div className="dashboard">
+      {/* Header con gradiente */}
+      <div className="dashboard-header-new">
+        <h1>
+          Hola, {usuario?.nombre || "Usuario"}! <Gamepad2 size={48} style={{ verticalAlign: "middle", marginLeft: "12px" }} />
         </h1>
-        <p style={{ fontSize: "1.25rem", fontWeight: "500", color: "var(--color-text-muted)" }}>Bienvenido a tu panel de Robin HOOT</p>
+        <p>Bienvenido a tu panel de Robin HOOT</p>
       </div>
 
       {/* Stats */}
-      <div className="dashboard-grid" style={{ marginBottom: "60px", gap: "30px" }}>
+      <div className="dashboard-stats-grid">
         <CustomCard variant="blue" title="Puntuacion" icon={<Star size={32} />}>
           <div style={{ fontSize: "3rem", fontWeight: "900", textAlign: "center", margin: "10px 0" }}>{(ranking?.length || 0) * 10}</div>
           <p style={{ textAlign: "center", fontWeight: "600" }}>Puntos acumulados</p>
@@ -64,7 +65,8 @@ export default function Dashboard() {
         </CustomCard>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "40px", marginBottom: "60px" }}>
+      {/* Grid principal de secciones - 3 columnas desktop → 1 columna mobile */}
+      <div className="dashboard-main-grid">
         {/* Info del usuario */}
         <CustomCard icon={<User size={32} />} title="Perfil Academico" variant="primary">
           <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "20px" }}>
@@ -77,18 +79,26 @@ export default function Dashboard() {
           </div>
         </CustomCard>
 
-        {/* Join Game */}
-        <GameBoard />
-        {/* Crear Partida (docente) */}
-        <CrearSesion />
-        {/* Importar preguntas desde OpenTDB */}
+        {/* Join Game - Yellow */}
+        <div className="section-join">
+          <GameBoard />
+        </div>
+        
+        {/* Crear Partida (docente) - Red */}
+        <div className="section-create">
+          <CrearSesion />
+        </div>
+      </div>
+
+      {/* Sección secundaria - ImportarTrivia - Blue */}
+      <div className="section-import" style={{ marginBottom: "50px" }}>
         <ImportarTrivia />
       </div>
 
-      <h2 style={{ fontSize: "2.2rem", fontWeight: "900", color: "var(--color-primary)", marginBottom: "32px", display: "flex", alignItems: "center" }}>
-        <Rocket size={40} style={{ marginRight: "15px", color: "var(--color-kahoot-red)" }} /> Panel de Desafios
+      <h2 className="dashboard-section-title">
+        <Rocket size={40} className="title-icon" /> Panel de Desafios
       </h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px", marginBottom: "60px" }}>
+      <div className="dashboard-challenges-grid">
         <CustomCard variant="red" icon={<Gamepad2 size={32} />} title="Desafio Clasico">
           <p style={{ marginBottom: "20px", fontSize: "1rem" }}>El quiz de toda la vida. Responde rapido y gana puntos para tu racha.</p>
           <MyButton variant="red" fullWidth style={{ padding: "16px" }}>¡JUGAR YA!</MyButton>
@@ -115,7 +125,7 @@ export default function Dashboard() {
       </div>
 
       {/* Logout */}
-      <div style={{ textAlign: "center", marginTop: "80px", marginBottom: "40px" }}>
+      <div className="dashboard-logout">
         <MyButton variant="danger" onClick={handleLogout} style={{ padding: "16px 50px", fontSize: "1.1rem" }}>
           <LogOut size={22} style={{ marginRight: "10px" }} /> CERRAR SESION
         </MyButton>

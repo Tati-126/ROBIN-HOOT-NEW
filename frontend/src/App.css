@@ -327,6 +327,159 @@ body {
   color: var(--color-text-muted);
 }
 
+/* ─── Dashboard Nuevo (Persona 4) ─────────────────────────────── */
+/* Header con gradiente */
+.dashboard-header-new {
+  text-align: center;
+  padding: 40px 30px;
+  margin-bottom: 50px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-bright) 50%, var(--color-primary-glow) 100%);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(27, 94, 32, 0.25);
+}
+
+.dashboard-header-new::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 50%);
+  animation: header-glow 6s infinite alternate ease-in-out;
+}
+
+@keyframes header-glow {
+  from { transform: translate(-10%, -10%); }
+  to { transform: translate(10%, 10%); }
+}
+
+.dashboard-header-new h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-header-new p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+/* Grid principal responsivo - 3 columnas desktop → 1 columna mobile */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-main-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-header-new h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Colores distintivos para secciones */
+.section-join {
+  border-top: 4px solid var(--color-kahoot-yellow) !important;
+}
+
+.section-join .section-icon {
+  background-color: rgba(216, 158, 0, 0.15) !important;
+  color: var(--color-kahoot-yellow) !important;
+}
+
+.section-create {
+  border-top: 4px solid var(--color-kahoot-red) !important;
+}
+
+.section-create .section-icon {
+  background-color: rgba(226, 27, 60, 0.15) !important;
+  color: var(--color-kahoot-red) !important;
+}
+
+.section-ranking {
+  border-top: 4px solid var(--color-kahoot-purple) !important;
+}
+
+.section-ranking .section-icon {
+  background-color: rgba(70, 23, 143, 0.15) !important;
+  color: var(--color-kahoot-purple) !important;
+}
+
+.section-import {
+  border-top: 4px solid var(--color-kahoot-blue) !important;
+}
+
+.section-import .section-icon {
+  background-color: rgba(5, 66, 185, 0.15) !important;
+  color: var(--color-kahoot-blue) !important;
+}
+
+/* Grid de stats */
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Grid de desafíos */
+.dashboard-challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+/* Section title con icono */
+.dashboard-section-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-section-title .title-icon {
+  color: var(--color-kahoot-red);
+}
+
+/* Logout button */
+.dashboard-logout {
+  text-align: center;
+  margin-top: 60px;
+  margin-bottom: 40px;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
