@@ -10,7 +10,7 @@ const options = {
         "API REST para Robin HOOT — plataforma de quizzes interactivos en tiempo real. Autenticación con JWT via cookie HTTP-only.",
     },
     servers: [
-      { url: "http://localhost:5000", description: "Servidor de desarrollo" },
+      { url: "http://localhost:5001", description: "Servidor de desarrollo" },
     ],
     components: {
       securitySchemes: {

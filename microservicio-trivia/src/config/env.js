@@ -4,10 +4,10 @@
  */
 
 // Puerto en el que escucha el microservicio
-export const PUERTO = process.env.PUERTO || "5001";
+export const PUERTO = process.env.PUERTO || "5002";
 
 // URL del backend principal de Robin HOOT
-export const URL_BACKEND = process.env.URL_BACKEND || "http://localhost:5000";
+export const URL_BACKEND = process.env.URL_BACKEND || "http://localhost:5001";
 
 // URL base de Open Trivia Database
 export const URL_OPENTDB = process.env.URL_OPENTDB || "https://opentdb.com";
