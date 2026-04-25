@@ -72,15 +72,19 @@ export default function ImportarTrivia() {
     setResultado(null);
 
     try {
-      const data = await obtenerPreguntasTrivia({
-        cantidad: 10,
-        categoria: filtros.categoria || undefined,
-        dificultad: filtros.dificultad || undefined,
-      });
+      const [dataPreguntas, dataJuegos] = await Promise.all([
+        obtenerPreguntasTrivia({
+          cantidad: 10,
+          categoria: filtros.categoria || undefined,
+          dificultad: filtros.dificultad || undefined,
+        }),
+        obtenerJuegosTrivia(),
+      ]);
 
-      const nuevasPreguntas = data.preguntas || [];
+      const nuevasPreguntas = dataPreguntas.preguntas || [];
       setPreguntas(nuevasPreguntas);
       setSeleccionadas(nuevasPreguntas.map((_, idx) => String(idx)));
+      setJuegos(Array.isArray(dataJuegos) ? dataJuegos : []);
       setPaso(2);
     } catch (err) {
       setError(err.message || "No se pudieron obtener preguntas");
@@ -227,6 +231,12 @@ export default function ImportarTrivia() {
                   ))}
                 </select>
               </label>
+
+              {juegos.length === 0 && (
+                <p style={{ color: "#a0112b", fontWeight: 700 }}>
+                  No hay juegos creados todavía. Crea una partida para generar un juego destino.
+                </p>
+              )}
 
               <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
                 <ListChecks size={18} /> Preguntas encontradas: {preguntas.length}
