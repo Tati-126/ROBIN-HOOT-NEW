@@ -625,3 +625,124 @@ body {
     font-size: 1.8rem;
   }
 }
+
+/* ─── Requirement 2: GameBoard - Sesión Activa (Persona 2) ───────────────────── */
+
+/* Badge del nickname del jugador */
+.player-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--color-kahoot-yellow), var(--color-kahoot-red));
+  border-radius: 50px;
+  color: white;
+  font-weight: 900;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-md), 0 4px 0 rgba(0,0,0,0.2);
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+
+/* Lista de ranking */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+/* Item base del ranking */
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: var(--transition-smooth);
+  font-weight: 600;
+}
+
+/* Top 3 con fondo dorado suave */
+.ranking-item.top-three {
+  background: linear-gradient(135deg, #fff9e6, #ffffff);
+  border-color: var(--color-kahoot-yellow);
+  font-weight: 700;
+}
+
+/* Jugador actual resaltado en verde */
+.ranking-item.current-player {
+  background: rgba(27, 94, 32, 0.1);
+  border-color: var(--color-primary);
+  border-width: 3px;
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.2);
+}
+
+/* Combinación: top 3 + jugador actual */
+.ranking-item.top-three.current-player {
+  background: linear-gradient(135deg, rgba(27, 94, 32, 0.1), #fff9e6);
+  border-color: var(--color-primary);
+}
+
+/* Medalla emoji */
+.ranking-medal {
+  font-size: 1.4rem;
+  margin-right: 6px;
+  line-height: 1;
+}
+
+/* Nombre del jugador en el ranking */
+.ranking-player-name {
+  flex: 1;
+  text-align: left;
+  font-size: 1rem;
+}
+
+/* Puntaje del jugador */
+.ranking-player-score {
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* Sala de espera: lista de participantes */
+.waiting-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  text-align: left;
+}
+
+.waiting-room-item {
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-left: 3px solid var(--color-kahoot-yellow);
+}
+
+/* Header de la sesión activa */
+.session-active-header {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Título de sección dentro del juego */
+.ranking-section-title {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
