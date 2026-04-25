@@ -10,10 +10,56 @@ import CustomCard from "./ui/CustomCard";
 import MyButton from "./ui/MyButton";
 import { Hash, AlertCircle, Users, Trophy } from "lucide-react";
 
-/** Retorna el emoji de medalla para el top 3 */
+/** Retorna el emoji de medalla para el top 3 (Persona 2) */
 const getMedal = (index) => {
   const medals = ["🥇", "🥈", "🥉"];
   return medals[index] ?? null;
+};
+
+/** Retorna la variante de color Kahoot para cada opción (Persona 3) */
+const getColorVariant = (index) => {
+  const variants = ["purple", "blue", "red", "yellow"];
+  return variants[index % 4];
+};
+
+/** Renderiza el área de preguntas según el estado de carga (Persona 3) */
+const renderPreguntas = (cargando, preguntas) => {
+  if (cargando) {
+    return <p className="questions-loading">Cargando preguntas...</p>;
+  }
+  if (preguntas.length === 0) {
+    return <p className="questions-empty">Esta partida aún no tiene preguntas asociadas.</p>;
+  }
+  return (
+    <div style={{ marginBottom: "24px" }}>
+      {preguntas.map((pregunta, idx) => (
+        <div key={pregunta._id} className="question-display">
+          <div className="question-header">
+            <span className="question-number">
+              Pregunta {idx + 1} de {preguntas.length}
+            </span>
+          </div>
+          <div className="question-text">
+            <h2>{pregunta.enunciado}</h2>
+          </div>
+          <div className="options-grid">
+            {(pregunta.opciones || []).map((opcion, opIdx) => (
+              <button
+                key={opcion._id}
+                className={`option-card option-${getColorVariant(opIdx)}`}
+                type="button"
+              >
+                <span className="option-letter">
+                  {String.fromCodePoint(65 + opIdx)}
+                </span>
+                <span className="option-text">{opcion.texto}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 /**
@@ -86,13 +132,11 @@ export default function GameBoard() {
       const { sessionId, participantId, juegoId, estado } = result.data;
       setSesion({ sessionId, participantId, juegoId });
 
-      // Si el estudiante entra cuando la sesión ya está activa, cargamos preguntas de inmediato.
       if (estado === "ACTIVA") {
         setIniciada(true);
         await cargarPreguntasJuego(juegoId);
       }
 
-      // Unirse al room de socket para recibir eventos en tiempo real
       socket.emit("join_session", {
         pin: pin.trim(),
         usuarioId: usuario?._id || usuario?.id || `guest_${Date.now()}`,
@@ -116,7 +160,7 @@ export default function GameBoard() {
         <div style={{ textAlign: "center" }}>
           {iniciada ? (
             <>
-              {/* Badge prominente con el nickname del jugador — solo en partida activa */}
+              {/* Badge prominente con el nickname — Persona 2 */}
               <div className="player-badge">
                 <Trophy size={20} />
                 <span>{nickname}</span>
@@ -124,58 +168,10 @@ export default function GameBoard() {
 
               <p className="session-active-header">¡El juego ha comenzado!</p>
 
-              {cargandoPreguntas ? (
-                <p style={{ marginBottom: "18px", color: "var(--color-text-muted)" }}>
-                  Cargando preguntas...
-                </p>
-              ) : (
-                <div style={{ marginBottom: "18px", textAlign: "left" }}>
-                  <p style={{ fontWeight: "800", marginBottom: "10px" }}>
-                    Preguntas disponibles: {preguntasJuego.length}
-                  </p>
+              {/* Área de preguntas mejorada — Persona 3 */}
+              {renderPreguntas(cargandoPreguntas, preguntasJuego)}
 
-                  {preguntasJuego.length === 0 ? (
-                    <p style={{ color: "var(--color-text-muted)" }}>
-                      Esta partida aún no tiene preguntas asociadas.
-                    </p>
-                  ) : (
-                    <div
-                      style={{
-                        maxHeight: "220px",
-                        overflowY: "auto",
-                        display: "grid",
-                        gap: "8px",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      {preguntasJuego.map((pregunta, idx) => (
-                        <div
-                          key={pregunta._id}
-                          style={{
-                            backgroundColor: "#f5f5f5",
-                            borderRadius: "10px",
-                            padding: "10px",
-                            border: "1px solid #ececec",
-                          }}
-                        >
-                          <p style={{ fontWeight: "700", marginBottom: "6px" }}>
-                            {idx + 1}. {pregunta.enunciado}
-                          </p>
-                          <div style={{ display: "grid", gap: "4px" }}>
-                            {(pregunta.opciones || []).map((opcion) => (
-                              <span key={opcion._id} style={{ fontSize: "0.92rem" }}>
-                                - {opcion.texto}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Ranking en tiempo real con top 3 destacado */}
+              {/* Ranking en tiempo real con top 3 — Persona 2 */}
               {ranking.length > 0 && (
                 <>
                   <p className="ranking-section-title">Ranking en vivo</p>
@@ -293,5 +289,3 @@ export default function GameBoard() {
     </CustomCard>
   );
 }
-
-
