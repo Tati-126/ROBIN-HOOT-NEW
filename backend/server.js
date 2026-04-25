@@ -7,7 +7,7 @@ import { connectDB } from "./src/config/db.js";
 import { initSocket } from "./src/modules/sessions/session.socket.js";
 import app from "./src/app.js";
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // SERVIDOR HTTP + SOCKET
 const httpServer = createServer(app);
