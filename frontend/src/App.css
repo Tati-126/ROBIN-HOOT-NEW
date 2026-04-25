@@ -746,3 +746,147 @@ body {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* ─── Requirement 3: Question Display (Persona 3) ───────────────────────────── */
+
+/* Contenedor principal de la pregunta */
+.question-display {
+  padding: 24px 16px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* Header con numeración de pregunta */
+.question-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.question-number {
+  display: inline-block;
+  padding: 6px 20px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+/* Enunciado de la pregunta */
+.question-text {
+  margin-bottom: 28px;
+}
+
+.question-text h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Grid de opciones de respuesta */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .question-text h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Card base de cada opción */
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-family);
+}
+
+.option-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.option-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Variantes de color Kahoot */
+.option-purple {
+  background: var(--color-kahoot-purple);
+  box-shadow: 0 4px 0 #331169;
+}
+
+.option-blue {
+  background: var(--color-kahoot-blue);
+  box-shadow: 0 4px 0 #04328a;
+}
+
+.option-red {
+  background: var(--color-kahoot-red);
+  box-shadow: 0 4px 0 #a9132d;
+}
+
+.option-yellow {
+  background: var(--color-kahoot-yellow);
+  box-shadow: 0 4px 0 #a17600;
+}
+
+/* Letra identificadora de la opción (A, B, C, D) */
+.option-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+/* Texto de la opción */
+.option-text {
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* Estado vacío de preguntas */
+.questions-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* Loading de preguntas */
+.questions-loading {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  font-style: italic;
+}
