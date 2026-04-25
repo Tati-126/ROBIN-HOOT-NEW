@@ -5,7 +5,7 @@ import MyButton from "../components/ui/MyButton";
 import CustomCard from "../components/ui/CustomCard";
 import GameDemo from "../components/GameDemo";
 import { Zap, Trophy, Target, Award, Rocket, Smile, ArrowRight } from "lucide-react";
-import landingBackground from "../assets/backgrounds/ITP-1.jpeg";
+import landingBackground from "../assets/backgrounds/ITP-3.jpeg";
 
 /**
  * LandingPage - Estilo Kahoot + Uniputumayo

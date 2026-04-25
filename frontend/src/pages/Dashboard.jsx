@@ -10,6 +10,8 @@ import ImportarTrivia from "../components/ImportarTrivia.jsx";
 import { useNavigate } from "react-router-dom";
 import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket } from "lucide-react";
 
+import dashboardBackground from "../assets/backgrounds/ITP-3.jpeg";
+
 /**
  * Dashboard - Página protegida del usuario autenticado
  */
@@ -40,7 +42,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard">
+    <div
+      className="dashboard-page page-with-background"
+      style={{
+        backgroundImage: `url(${dashboardBackground})`,
+        minHeight: "100vh",
+        backgroundAttachment: "fixed"
+      }}
+    >
+      <div className="background-overlay" style={{ background: "rgba(0, 0, 0, 0.6)" }} />
+      <div className="dashboard" style={{ position: "relative", zIndex: 2 }}>
       {/* Header con gradiente */}
       <div className="dashboard-header-new">
         <h1>
@@ -129,6 +140,7 @@ export default function Dashboard() {
         <MyButton variant="danger" onClick={handleLogout} style={{ padding: "16px 50px", fontSize: "1.1rem" }}>
           <LogOut size={22} style={{ marginRight: "10px" }} /> CERRAR SESION
         </MyButton>
+      </div>
       </div>
     </div>
   );
