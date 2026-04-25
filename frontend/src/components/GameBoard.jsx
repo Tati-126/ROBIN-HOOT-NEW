@@ -114,17 +114,16 @@ export default function GameBoard() {
         title={iniciada ? "¡Partida en Curso!" : "Sala de Espera"}
       >
         <div style={{ textAlign: "center" }}>
-          {/* Badge prominente con el nickname del jugador */}
-          <div className="player-badge">
-            <Trophy size={20} />
-            <span>{nickname}</span>
-          </div>
-
           {iniciada ? (
             <>
+              {/* Badge prominente con el nickname del jugador — solo en partida activa */}
+              <div className="player-badge">
+                <Trophy size={20} />
+                <span>{nickname}</span>
+              </div>
+
               <p className="session-active-header">¡El juego ha comenzado!</p>
 
-              {/* Área de preguntas — Persona 3 refactorizará esta sección */}
               {cargandoPreguntas ? (
                 <p style={{ marginBottom: "18px", color: "var(--color-text-muted)" }}>
                   Cargando preguntas...
