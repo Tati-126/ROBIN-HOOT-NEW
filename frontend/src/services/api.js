@@ -10,6 +10,15 @@ const fetchApi = (path, options = {}) => {
   });
 };
 
+const parseErrorMessage = async (response, fallbackMessage) => {
+  try {
+    const data = await response.json();
+    return data.message || data.error || fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+};
+
 /**
  * PERSONA 1: Función para obtener el ranking del backend
  * TODO: Agregar manejo de errores y validación de datos
@@ -63,8 +72,8 @@ export const registrarUsuario = async (nombre, email, password) => {
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Error al registrar");
+      const message = await parseErrorMessage(response, `Error al registrar (HTTP ${response.status})`);
+      throw new Error(message);
     }
     
     return await response.json();
@@ -88,8 +97,8 @@ export const loginUsuario = async (email, password) => {
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Credenciales inválidas");
+      const message = await parseErrorMessage(response, `Error de autenticación (HTTP ${response.status})`);
+      throw new Error(message);
     }
     
     const data = await response.json();
@@ -168,6 +177,40 @@ export const crearSesion = async (juegoId, creadorId) => {
 };
 
 /**
+ * Crear un juego en el backend principal (ADMIN o DOCENTE)
+ */
+export const crearJuego = async (titulo, creadorId) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No hay token de autenticación");
+  }
+
+  try {
+    const response = await fetchApi("/api/juegos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        titulo,
+        creadorId,
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, `Error al crear juego (HTTP ${response.status})`);
+      throw new Error(message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al crear juego:", error);
+    throw error;
+  }
+};
+
+/**
  * Unirse a una sesion existente por PIN
  */
 export const unirseASesion = async (pin, nickname, usuarioId) => {
@@ -184,6 +227,66 @@ export const unirseASesion = async (pin, nickname, usuarioId) => {
     return await response.json();
   } catch (error) {
     console.error("[API] Error al unirse a sesion:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener preguntas de un juego
+ */
+export const obtenerPreguntasDelJuego = async (juegoId) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No hay token de autenticación");
+  }
+
+  try {
+    const response = await fetchApi(`/api/preguntas/juego/${juegoId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, `Error al obtener preguntas (HTTP ${response.status})`);
+      throw new Error(message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al obtener preguntas del juego:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener opciones de respuesta por pregunta
+ */
+export const obtenerOpcionesPorPregunta = async (preguntaId) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No hay token de autenticación");
+  }
+
+  try {
+    const response = await fetchApi(`/api/opciones/pregunta/${preguntaId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, `Error al obtener opciones (HTTP ${response.status})`);
+      throw new Error(message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al obtener opciones de la pregunta:", error);
     throw error;
   }
 };

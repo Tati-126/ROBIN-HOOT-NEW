@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { unirseASesion } from "../services/api.js";
+import {
+  unirseASesion,
+  obtenerPreguntasDelJuego,
+  obtenerOpcionesPorPregunta,
+} from "../services/api.js";
 import socket from "../socket.js";
 import { useAuth } from "../hooks/useAuth.jsx";
 import CustomCard from "./ui/CustomCard";
@@ -15,14 +19,44 @@ export default function GameBoard() {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [sesion, setSesion] = useState(null); // { sessionId, participantId }
+  const [sesion, setSesion] = useState(null); // { sessionId, participantId, juegoId }
   const [ranking, setRanking] = useState([]);
   const [iniciada, setIniciada] = useState(false);
+  const [preguntasJuego, setPreguntasJuego] = useState([]);
+  const [cargandoPreguntas, setCargandoPreguntas] = useState(false);
+
+  const cargarPreguntasJuego = async (juegoId) => {
+    if (!juegoId) return;
+
+    setCargandoPreguntas(true);
+    try {
+      const preguntas = await obtenerPreguntasDelJuego(juegoId);
+
+      const preguntasConOpciones = await Promise.all(
+        (preguntas || []).map(async (pregunta) => {
+          const opciones = await obtenerOpcionesPorPregunta(pregunta._id);
+          return {
+            ...pregunta,
+            opciones: opciones || [],
+          };
+        })
+      );
+
+      setPreguntasJuego(preguntasConOpciones);
+    } catch (err) {
+      setError(err.message || "No se pudieron cargar las preguntas del juego");
+    } finally {
+      setCargandoPreguntas(false);
+    }
+  };
 
   useEffect(() => {
     if (!sesion) return;
     const onRankingUpdated = ({ ranking }) => setRanking(ranking);
-    const onSessionStarted = () => setIniciada(true);
+    const onSessionStarted = async () => {
+      setIniciada(true);
+      await cargarPreguntasJuego(sesion.juegoId);
+    };
     socket.on("ranking_updated", onRankingUpdated);
     socket.on("session_started", onSessionStarted);
     return () => {
@@ -43,8 +77,15 @@ export default function GameBoard() {
         nickname.trim(),
         usuario?._id || usuario?.id
       );
-      const { sessionId, participantId } = result.data;
-      setSesion({ sessionId, participantId });
+      const { sessionId, participantId, juegoId, estado } = result.data;
+      setSesion({ sessionId, participantId, juegoId });
+
+      // Si el estudiante entra cuando la sesión ya está activa, cargamos preguntas de inmediato.
+      if (estado === "ACTIVA") {
+        setIniciada(true);
+        await cargarPreguntasJuego(juegoId);
+      }
+
       // Unirse al room de socket para recibir eventos en tiempo real
       socket.emit("join_session", {
         pin: pin.trim(),
@@ -101,6 +142,58 @@ export default function GameBoard() {
               <p style={{ fontSize: "1.2rem", fontWeight: "900", color: "var(--color-primary)", marginBottom: "20px" }}>
                 ¡El juego ha comenzado!
               </p>
+
+              {cargandoPreguntas ? (
+                <p style={{ marginBottom: "18px", color: "var(--color-text-muted)" }}>
+                  Cargando preguntas...
+                </p>
+              ) : (
+                <div style={{ marginBottom: "18px", textAlign: "left" }}>
+                  <p style={{ fontWeight: "800", marginBottom: "10px" }}>
+                    Preguntas disponibles: {preguntasJuego.length}
+                  </p>
+
+                  {preguntasJuego.length === 0 ? (
+                    <p style={{ color: "var(--color-text-muted)" }}>
+                      Esta partida aún no tiene preguntas asociadas.
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        maxHeight: "220px",
+                        overflowY: "auto",
+                        display: "grid",
+                        gap: "8px",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {preguntasJuego.map((pregunta, idx) => (
+                        <div
+                          key={pregunta._id}
+                          style={{
+                            backgroundColor: "#f5f5f5",
+                            borderRadius: "10px",
+                            padding: "10px",
+                            border: "1px solid #ececec",
+                          }}
+                        >
+                          <p style={{ fontWeight: "700", marginBottom: "6px" }}>
+                            {idx + 1}. {pregunta.enunciado}
+                          </p>
+                          <div style={{ display: "grid", gap: "4px" }}>
+                            {(pregunta.opciones || []).map((opcion) => (
+                              <span key={opcion._id} style={{ fontSize: "0.92rem" }}>
+                                - {opcion.texto}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {ranking.map((p, idx) => (
                 <div key={p.participantId || idx} style={{
                   display: "flex", justifyContent: "space-between",

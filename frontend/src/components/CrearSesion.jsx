@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth.jsx";
-import { crearSesion } from "../services/api.js";
+import { crearJuego, crearSesion } from "../services/api.js";
 import socket from "../socket.js";
 import CustomCard from "./ui/CustomCard";
 import MyButton from "./ui/MyButton";
@@ -38,16 +38,24 @@ export default function CrearSesion() {
     setLoading(true);
     setError(null);
     try {
+      const creadorId = usuario?._id || usuario?.id;
+      if (!creadorId) {
+        throw new Error("No se pudo identificar el usuario creador");
+      }
+
+      // Primero creamos el juego para obtener un juegoId real persistido en BD.
+      const juegoCreado = await crearJuego(juegoNombre.trim(), creadorId);
+
       const result = await crearSesion(
-        juegoNombre.trim(),
-        usuario?._id || usuario?.id || "host"
+        juegoCreado?._id,
+        creadorId
       );
       const { sessionId, pin } = result.data;
       setSesion({ sessionId, pin });
       // El host se une al socket room para recibir eventos de la sala
       socket.emit("join_session", {
         pin,
-        usuarioId: usuario?._id || usuario?.id || "host",
+        usuarioId: creadorId,
         nombre: `${usuario?.nombre || "Docente"} (host)`,
       });
     } catch (err) {
