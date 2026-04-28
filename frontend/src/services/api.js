@@ -20,14 +20,19 @@ const parseErrorMessage = async (response, fallbackMessage) => {
 };
 
 /**
- * PERSONA 1: Función para obtener el ranking del backend
- * TODO: Agregar manejo de errores y validación de datos
+ * Obtener el ranking global del backend (requiere autenticación)
  */
 export const getBackendData = async () => {
+  const token = localStorage.getItem("token");
   console.log(`[API] Solicitando datos de: ${buildApiUrl("/api/ranking")}`);
-  
+
   try {
-    const response = await fetchApi("/api/ranking");
+    const response = await fetchApi("/api/ranking", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -156,13 +161,17 @@ export const logout = () => {
 };
 
 /**
- * Crear una sesion de juego (genera PIN)
+ * Crear una sesion de juego (genera PIN) — requiere autenticación DOCENTE o ADMIN
  */
 export const crearSesion = async (juegoId, creadorId) => {
+  const token = localStorage.getItem("token");
   try {
     const response = await fetchApi("/api/sessions/start", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ juegoId, creadorId }),
     });
     if (!response.ok) {
@@ -287,6 +296,82 @@ export const obtenerOpcionesPorPregunta = async (preguntaId) => {
     return await response.json();
   } catch (error) {
     console.error("[API] Error al obtener opciones de la pregunta:", error);
+    throw error;
+  }
+};
+
+// ─── FUNCIONES DE GESTIÓN DE PREGUNTAS Y OPCIONES ────────────────────────────
+
+/**
+ * Crear una pregunta en un juego (ADMIN o DOCENTE)
+ */
+export const crearPregunta = async (enunciado, tipo, tiempoLimite, juegoId) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetchApi("/api/preguntas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ enunciado, tipo, tiempoLimite, juegoId }),
+    });
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, "Error al crear pregunta");
+      throw new Error(message);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al crear pregunta:", error);
+    throw error;
+  }
+};
+
+/**
+ * Crear una opción de respuesta para una pregunta (ADMIN o DOCENTE)
+ */
+export const crearOpcion = async (texto, esCorrecta, preguntaId) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetchApi("/api/opciones", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ texto, esCorrecta, preguntaId }),
+    });
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, "Error al crear opcion");
+      throw new Error(message);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al crear opcion:", error);
+    throw error;
+  }
+};
+
+/**
+ * Eliminar una pregunta por ID (ADMIN o DOCENTE)
+ */
+export const eliminarPregunta = async (preguntaId) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await fetchApi(`/api/preguntas/${preguntaId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, "Error al eliminar pregunta");
+      throw new Error(message);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error al eliminar pregunta:", error);
     throw error;
   }
 };

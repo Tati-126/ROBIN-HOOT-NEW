@@ -1,4 +1,6 @@
 import * as sessionService from "./session.service.js";
+import Session from "./session.model.js";
+import Pregunta from "../../models/Pregunta.js";
 
 /**
  * Inicializa todos los eventos de Socket.io para el módulo de sesiones.
@@ -102,6 +104,40 @@ export const initSocket = (io) => {
                     success: false,
                     message: error.message,
                 });
+            }
+        });
+
+        // ── next_question ───────────────────────────────────────────────────────
+        // El host envía: { sessionId, preguntaIndex }
+        socket.on("next_question", async ({ sessionId, preguntaIndex }) => {
+            try {
+                const room = `session_${sessionId}`;
+                const session = await Session.findById(sessionId);
+                if (!session) return;
+
+                const preguntas = await Pregunta.find({ juegoId: session.juegoId });
+
+                if (preguntaIndex >= preguntas.length) {
+                    // Fin del juego — emitir ranking final a toda la sala
+                    const ranking = await sessionService.getRanking(sessionId);
+                    io.to(room).emit("game_finished", { ranking });
+                    console.log(`[Socket] Juego finalizado en sesión ${sessionId}`);
+                } else {
+                    // Avanzar a la siguiente pregunta (SIN opciones para evitar trampa)
+                    const pregunta = preguntas[preguntaIndex];
+                    io.to(room).emit("question_changed", {
+                        preguntaIndex,
+                        pregunta: {
+                            _id: pregunta._id,
+                            enunciado: pregunta.enunciado,
+                            tipo: pregunta.tipo,
+                            tiempoLimite: pregunta.tiempoLimite,
+                        },
+                    });
+                    console.log(`[Socket] Pregunta ${preguntaIndex + 1} enviada a sesión ${sessionId}`);
+                }
+            } catch (error) {
+                socket.emit("next_question_error", { message: error.message });
             }
         });
 
