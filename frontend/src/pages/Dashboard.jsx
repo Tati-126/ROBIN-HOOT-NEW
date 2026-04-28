@@ -10,7 +10,7 @@ import ImportarTrivia from "../components/ImportarTrivia.jsx";
 import { useNavigate } from "react-router-dom";
 import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket } from "lucide-react";
 
-import dashboardBackground from "../assets/backgrounds/ITP-3.jpeg";
+import dashboardBackground from "../assets/backgrounds/ITP.2.jpeg";
 
 /**
  * Dashboard - Página protegida del usuario autenticado
@@ -41,6 +41,14 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  // Calcular posición del usuario en el ranking
+  const posicionUsuario = ranking.findIndex(
+    (r) => r.usuarioId === (usuario?._id || usuario?.id)
+  ) + 1;
+
+  // Total de jugadores activos en el ranking
+  const totalJugadores = ranking.length;
+
   return (
     <div
       className="dashboard-page page-with-background"
@@ -50,7 +58,9 @@ export default function Dashboard() {
         backgroundAttachment: "fixed"
       }}
     >
-      <div className="background-overlay" style={{ background: "rgba(0, 0, 0, 0.6)" }} />
+      <div className="background-overlay" style={{ 
+        background: "linear-gradient(to bottom, rgba(173, 216, 230, 0.5) 0%, rgba(0, 0, 0, 0.6) 40%, rgba(0, 0, 0, 0.6) 100%)" 
+      }} />
       <div className="dashboard" style={{ position: "relative", zIndex: 2 }}>
       {/* Header con gradiente */}
       <div className="dashboard-header-new">
@@ -67,12 +77,16 @@ export default function Dashboard() {
           <p style={{ textAlign: "center", fontWeight: "600" }}>Puntos acumulados</p>
         </CustomCard>
         <CustomCard variant="purple" title="Partidas" icon={<Activity size={32} />}>
-          <div style={{ fontSize: "3rem", fontWeight: "900", textAlign: "center", margin: "10px 0" }}>5</div>
-          <p style={{ textAlign: "center", fontWeight: "600" }}>Completadas hoy</p>
+          <div style={{ fontSize: "3rem", fontWeight: "900", textAlign: "center", margin: "10px 0" }}>{totalJugadores}</div>
+          <p style={{ textAlign: "center", fontWeight: "600" }}>Jugadores activos</p>
         </CustomCard>
         <CustomCard variant="yellow" title="Ranking UP" icon={<Trophy size={32} />}>
-          <div style={{ fontSize: "3rem", fontWeight: "900", textAlign: "center", margin: "10px 0" }}>#3</div>
-          <p style={{ textAlign: "center", fontWeight: "600" }}>Posicion global</p>
+          <div style={{ fontSize: "3rem", fontWeight: "900", textAlign: "center", margin: "10px 0" }}>
+            {posicionUsuario > 0 ? `#${posicionUsuario}` : "—"}
+          </div>
+          <p style={{ textAlign: "center", fontWeight: "600" }}>
+            {posicionUsuario > 0 ? "Posicion global" : "Sin ranking aun"}
+          </p>
         </CustomCard>
       </div>
 
