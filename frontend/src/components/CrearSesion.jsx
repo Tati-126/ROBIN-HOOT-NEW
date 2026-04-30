@@ -129,6 +129,16 @@ export default function CrearSesion() {
       return;
     }
     setError(null);
+    
+    // Intentar activar pantalla completa al hacer clic (interacción del usuario)
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {
+      // Ignorar errores
+    }
+
     socket.emit("start_session", { sessionId: sesion.sessionId });
     // La primera pregunta se emite automáticamente desde el servidor
     // El host puede hacer clic en "Iniciar Primera Pregunta" para disparar manualmente si es necesario
@@ -205,8 +215,7 @@ export default function CrearSesion() {
   }
 
   // Sala activa: PIN visible + lista de participantes + botón iniciar
-  return (
-    <>
+  const sessionCard = (
       <CustomCard
         variant="purple"
         icon={<Users size={32} />}
@@ -315,6 +324,9 @@ export default function CrearSesion() {
                     setRankingFinal([]);
                     setParticipantes([]);
                     setJuegoNombre("");
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen().catch(() => {});
+                    }
                   }}
                   fullWidth
                   style={{ padding: "14px" }}
@@ -329,6 +341,9 @@ export default function CrearSesion() {
                     setPreguntaActualIndex(0);
                     setRankingFinal([]);
                     setParticipantes([]);
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen().catch(() => {});
+                    }
                   }}
                   fullWidth
                   style={{ padding: "14px" }}
@@ -430,6 +445,19 @@ export default function CrearSesion() {
           )}
         </div>
       </CustomCard>
+  );
+
+  return (
+    <>
+      {iniciada ? (
+        <div className="fullscreen-game-overlay">
+          <div className="fullscreen-game-container">
+            {sessionCard}
+          </div>
+        </div>
+      ) : (
+        sessionCard
+      )}
 
       <Modal
         isOpen={mostrarGestionar}

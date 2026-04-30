@@ -892,3 +892,30 @@ body {
   font-size: 1rem;
   font-style: italic;
 }
+
+/* ─── Pantalla Completa del Juego ─────────────────────────────── */
+.fullscreen-game-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background-color: var(--color-bg);
+  background-image: linear-gradient(135deg, var(--color-kahoot-blue) 0%, var(--color-kahoot-purple) 100%);
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.fullscreen-game-container {
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+

@@ -169,6 +169,16 @@ export default function GameBoard() {
     e.preventDefault();
     if (!pin.trim()) return setError("Ingresa un PIN válido");
     if (!nickname.trim()) return setError("Ingresa tu nickname");
+    
+    // Intentar activar pantalla completa al hacer clic (interacción del usuario)
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {
+      // Ignorar errores si no se puede
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -199,7 +209,7 @@ export default function GameBoard() {
 
   // Sala de espera / juego activo
   if (sesion) {
-    return (
+    const gameContent = (
       <CustomCard
         variant="yellow"
         icon={iniciada ? <Trophy size={32} /> : <Users size={32} />}
@@ -240,6 +250,21 @@ export default function GameBoard() {
                   );
                 })}
               </div>
+              <MyButton
+                variant="danger"
+                fullWidth
+                style={{ marginTop: "24px", padding: "16px" }}
+                onClick={() => {
+                  setSesion(null);
+                  setIniciada(false);
+                  setJuegoFinalizado(false);
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                  }
+                }}
+              >
+                SALIR DEL JUEGO
+              </MyButton>
             </>
           ) : iniciada ? (
             <>
@@ -378,6 +403,18 @@ export default function GameBoard() {
         </div>
       </CustomCard>
     );
+
+    if (iniciada) {
+      return (
+        <div className="fullscreen-game-overlay">
+          <div className="fullscreen-game-container">
+            {gameContent}
+          </div>
+        </div>
+      );
+    }
+
+    return gameContent;
   }
 
   // Formulario de entrada
