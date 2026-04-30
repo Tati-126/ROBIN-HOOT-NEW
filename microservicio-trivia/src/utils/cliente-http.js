@@ -56,7 +56,16 @@ export async function get(url, timeoutMs, opciones = {}) {
     console.warn(`[cliente-http] Error de red en GET ${url}. Reintentando en ${DELAY_REINTENTO}ms...`);
     await esperar(DELAY_REINTENTO);
 
-    return await fetchConTimeout(url, timeoutMs, { method: "GET", ...opciones });
+    try {
+      return await fetchConTimeout(url, timeoutMs, { method: "GET", ...opciones });
+    } catch (errorFinal) {
+      if (errorFinal.tipo === "timeout") throw errorFinal;
+
+      const error = new Error(`Error de red al consumir ${url}`);
+      error.tipo = "network";
+      error.causa = errorFinal;
+      throw error;
+    }
   }
 }
 
