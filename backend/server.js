@@ -12,6 +12,16 @@ const PORT = process.env.PORT || 5001;
 // SERVIDOR HTTP + SOCKET
 const httpServer = createServer(app);
 
+httpServer.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Puerto ${PORT} en uso. Cierra el proceso anterior o cambia PORT en .env.`);
+    process.exit(1);
+  }
+
+  console.error("Error al iniciar servidor backend:", error.message);
+  process.exit(1);
+});
+
 const io = new Server(httpServer, {
   cors: {
     origin: ["http://localhost:5173", "http://localhost:3000"],
@@ -30,4 +40,7 @@ connectDB().then(() => {
     console.log(`Socket.io activo en ws://localhost:${PORT}`);
     console.log(`Swagger docs en   http://localhost:${PORT}/api-docs`);
   });
+}).catch((error) => {
+  console.error("No se pudo conectar a MongoDB:", error.message);
+  process.exit(1);
 });

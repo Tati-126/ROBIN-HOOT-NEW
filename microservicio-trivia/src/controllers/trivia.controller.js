@@ -19,6 +19,9 @@ export async function getCategorias(req, res, next) {
     if (err.tipo === "timeout") {
       return res.status(503).json({ error: "El servicio de trivia externo no está disponible" });
     }
+    if (err.tipo === "network") {
+      return res.status(503).json({ error: "No se pudo conectar con el servicio de trivia externo" });
+    }
     if (err.tipo === "http") {
       return res.status(502).json({ error: `OpenTDB respondió con error: ${err.status}` });
     }
@@ -43,6 +46,12 @@ export async function getPreguntas(req, res, next) {
     }
     if (err.tipo === "timeout") {
       return res.status(503).json({ error: "El servicio de trivia externo no está disponible" });
+    }
+    if (err.tipo === "network") {
+      return res.status(503).json({ error: "No se pudo conectar con el servicio de trivia externo" });
+    }
+    if (err.tipo === "http") {
+      return res.status(502).json({ error: `OpenTDB respondió con error: ${err.status}` });
     }
     next(err);
   }
@@ -70,6 +79,9 @@ export async function postImportar(req, res, next) {
     
     if (err.tipo === "timeout") {
       return res.status(503).json({ error: "El backend principal no está disponible" });
+    }
+    if (err.tipo === "network") {
+      return res.status(503).json({ error: "No se pudo conectar con el backend principal" });
     }
 
     next(err);
