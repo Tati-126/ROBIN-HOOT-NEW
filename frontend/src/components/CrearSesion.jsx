@@ -99,7 +99,19 @@ export default function CrearSesion() {
 
   const handleIniciar = () => {
     if (!sesion) return;
+    if (preguntasJuego.length === 0) {
+      setError("No puedes iniciar el juego sin preguntas. Agrega al menos una pregunta.");
+      return;
+    }
+    setError(null);
     socket.emit("start_session", { sessionId: sesion.sessionId });
+    // Emitir automáticamente la primera pregunta
+    setTimeout(() => {
+      socket.emit("next_question", {
+        sessionId: sesion.sessionId,
+        preguntaIndex: 0
+      });
+    }, 500); // pequeño delay para asegurar que la sesión está iniciada
   };
 
   // Tarea 15: Control del host para avanzar preguntas
@@ -235,12 +247,17 @@ export default function CrearSesion() {
               <MyButton
                 variant="primary"
                 onClick={handleIniciar}
-                disabled={jugadores.length === 0}
+                disabled={jugadores.length === 0 || preguntasJuego.length === 0}
                 fullWidth
                 style={{ padding: "16px" }}
               >
                 INICIAR JUEGO
               </MyButton>
+              {preguntasJuego.length === 0 && (
+                <div style={{ color: "var(--color-kahoot-red)", marginTop: 10, fontWeight: 600 }}>
+                  Debes agregar al menos una pregunta antes de iniciar.
+                </div>
+              )}
             </>
           ) : juegoFinalizado ? (
             // Tarea 15.4: Mostrar ranking final cuando el juego termina
@@ -336,14 +353,34 @@ export default function CrearSesion() {
 
       <Modal
         isOpen={mostrarGestionar}
-        onClose={() => setMostrarGestionar(false)}
+        onClose={async () => {
+          setMostrarGestionar(false);
+          // Recargar preguntas al cerrar el modal
+          if (sesion?.juegoId) {
+            try {
+              const preguntas = await obtenerPreguntasDelJuego(sesion.juegoId);
+              setPreguntasJuego(preguntas);
+            } catch (err) {
+              // opcional: mostrar error
+            }
+          }
+        }}
         title="Gestionar Preguntas"
       >
         {sesion?.juegoId && (
           <GestionarPreguntas
             juegoId={sesion.juegoId}
             juegoTitulo={juegoNombre}
-            onClose={() => setMostrarGestionar(false)}
+            onClose={async () => {
+              setMostrarGestionar(false);
+              // Recargar preguntas al cerrar el modal
+              if (sesion?.juegoId) {
+                try {
+                  const preguntas = await obtenerPreguntasDelJuego(sesion.juegoId);
+                  setPreguntasJuego(preguntas);
+                } catch (err) {}
+              }
+            }}
           />
         )}
       </Modal>
