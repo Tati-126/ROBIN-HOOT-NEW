@@ -28,6 +28,7 @@ export default function CrearSesion() {
   const [preguntasJuego, setPreguntasJuego] = useState([]);
   const [juegoFinalizado, setJuegoFinalizado] = useState(false);
   const [rankingFinal, setRankingFinal] = useState([]);
+  const [ultimaRespuesta, setUltimaRespuesta] = useState(null);
 
   useEffect(() => {
     if (!sesion) return;
@@ -47,19 +48,43 @@ export default function CrearSesion() {
     // Tarea 14: Escuchar eventos socket del host
     const onQuestionChanged = ({ preguntaIndex }) => {
       setPreguntaActualIndex(preguntaIndex);
+      setUltimaRespuesta(null);
     };
     const onGameFinished = ({ ranking }) => {
       setJuegoFinalizado(true);
       setRankingFinal(ranking);
     };
+    const onAnswerProcessed = (payload) => {
+      if (!payload?.success) {
+        setUltimaRespuesta({
+          tipo: "error",
+          mensaje: payload?.message || "Error al procesar la respuesta.",
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      setUltimaRespuesta({
+        tipo: payload.correcta ? "correcta" : "incorrecta",
+        mensaje: payload.correcta
+          ? `Respuesta correcta: +${payload.puntosGanados} pts`
+          : "Respuesta incorrecta",
+        puntosGanados: payload.puntosGanados,
+        timestamp: Date.now(),
+      });
+
+      setTimeout(() => setUltimaRespuesta(null), 2500);
+    };
     socket.on("ranking_updated", onRankingUpdated);
     socket.on("session_started", onSessionStarted);
     socket.on("question_changed", onQuestionChanged);
+    socket.on("answer_processed", onAnswerProcessed);
     socket.on("game_finished", onGameFinished);
     return () => {
       socket.off("ranking_updated", onRankingUpdated);
       socket.off("session_started", onSessionStarted);
       socket.off("question_changed", onQuestionChanged);
+      socket.off("answer_processed", onAnswerProcessed);
       socket.off("game_finished", onGameFinished);
     };
   }, [sesion]);
@@ -105,13 +130,8 @@ export default function CrearSesion() {
     }
     setError(null);
     socket.emit("start_session", { sessionId: sesion.sessionId });
-    // Emitir automáticamente la primera pregunta
-    setTimeout(() => {
-      socket.emit("next_question", {
-        sessionId: sesion.sessionId,
-        preguntaIndex: 0
-      });
-    }, 500); // pequeño delay para asegurar que la sesión está iniciada
+    // La primera pregunta se emite automáticamente desde el servidor
+    // El host puede hacer clic en "Iniciar Primera Pregunta" para disparar manualmente si es necesario
   };
 
   // Tarea 15: Control del host para avanzar preguntas
@@ -283,6 +303,39 @@ export default function CrearSesion() {
                   <span style={{ fontWeight: "900" }}>{p.puntaje} pts</span>
                 </div>
               ))}
+              <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+                <MyButton
+                  variant="primary"
+                  onClick={() => {
+                    setSesion(null);
+                    setIniciada(false);
+                    setJuegoFinalizado(false);
+                    setPreguntaActualIndex(0);
+                    setPreguntasJuego([]);
+                    setRankingFinal([]);
+                    setParticipantes([]);
+                    setJuegoNombre("");
+                  }}
+                  fullWidth
+                  style={{ padding: "14px" }}
+                >
+                  ➕ CREAR NUEVA PARTIDA
+                </MyButton>
+                <MyButton
+                  variant="secondary"
+                  onClick={() => {
+                    setIniciada(false);
+                    setJuegoFinalizado(false);
+                    setPreguntaActualIndex(0);
+                    setRankingFinal([]);
+                    setParticipantes([]);
+                  }}
+                  fullWidth
+                  style={{ padding: "14px" }}
+                >
+                  🔄 NUEVA RONDA
+                </MyButton>
+              </div>
             </div>
           ) : (
             // Tarea 15: Controles del host durante el juego
@@ -309,6 +362,33 @@ export default function CrearSesion() {
                   <p style={{ fontSize: "1.1rem", fontWeight: "700" }}>
                     {preguntasJuego[preguntaActualIndex]?.enunciado}
                   </p>
+                </div>
+              )}
+
+              {/* Mostrar puntaje instantáneo de última respuesta */}
+              {ultimaRespuesta && (
+                <div
+                  style={{
+                    marginBottom: "16px",
+                    padding: "12px 14px",
+                    borderRadius: "12px",
+                    backgroundColor:
+                      ultimaRespuesta.tipo === "correcta"
+                        ? "rgba(34, 197, 94, 0.14)"
+                        : ultimaRespuesta.tipo === "incorrecta"
+                          ? "rgba(239, 68, 68, 0.14)"
+                          : "rgba(245, 158, 11, 0.14)",
+                    color:
+                      ultimaRespuesta.tipo === "correcta"
+                        ? "#166534"
+                        : ultimaRespuesta.tipo === "incorrecta"
+                          ? "#991b1b"
+                          : "#92400e",
+                    fontWeight: 700,
+                    textAlign: "center",
+                  }}
+                >
+                  {ultimaRespuesta.mensaje}
                 </div>
               )}
 

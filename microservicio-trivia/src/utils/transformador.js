@@ -1,5 +1,6 @@
 import he from "he";
 import { CATEGORIAS_ES } from "./categorias-es.js";
+import { traducirTexto } from "./traductor.js";
 
 /**
  * Decodifica entidades HTML en un texto.
@@ -79,7 +80,7 @@ export function mapearDificultadAEspanol(dificultadEn) {
  * @param {Object} preguntaOpenTDB
  * @returns {Object} Pregunta_Trivia
  */
-export function transformarPregunta(preguntaOpenTDB) {
+export async function transformarPregunta(preguntaOpenTDB) {
   const {
     question,
     correct_answer,
@@ -89,7 +90,7 @@ export function transformarPregunta(preguntaOpenTDB) {
     type,
   } = preguntaOpenTDB;
 
-  const enunciado = decodificarHTML(question);
+  const enunciado = await traducirTexto(decodificarHTML(question));
   const dificultad = mapearDificultadAEspanol(difficulty);
 
   // Traducir nombre de categoría usando la tabla estática (fallback al nombre en inglés)
@@ -97,7 +98,7 @@ export function transformarPregunta(preguntaOpenTDB) {
   const categoriaTraducida =
     Object.values(CATEGORIAS_ES).find(
       (nombre) => nombre.toLowerCase() === category.toLowerCase()
-    ) || category;
+    ) || (await traducirTexto(category));
 
   let opciones;
 
@@ -110,10 +111,15 @@ export function transformarPregunta(preguntaOpenTDB) {
     ];
   } else {
     // Preguntas de opción múltiple: mezclar correcta e incorrectas
+    const [respuestaCorrecta, ...respuestasIncorrectas] = await Promise.all([
+      traducirTexto(decodificarHTML(correct_answer)),
+      ...incorrect_answers.map((opcion) => traducirTexto(decodificarHTML(opcion))),
+    ]);
+
     const todasLasOpciones = [
-      { texto: decodificarHTML(correct_answer), esCorrecta: true },
-      ...incorrect_answers.map((opcion) => ({
-        texto: decodificarHTML(opcion),
+      { texto: respuestaCorrecta, esCorrecta: true },
+      ...respuestasIncorrectas.map((opcion) => ({
+        texto: opcion,
         esCorrecta: false,
       })),
     ];

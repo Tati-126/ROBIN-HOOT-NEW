@@ -42,10 +42,12 @@ export async function obtenerCategorias() {
   const data = await respuesta.json();
   
   // Transformar y traducir categorías
-  const categoriasTraducidas = data.trivia_categories.map((cat) => ({
-    id: cat.id,
-    nombre: CATEGORIAS_ES[cat.id] || cat.name,
-  }));
+  const categoriasTraducidas = await Promise.all(
+    data.trivia_categories.map(async (cat) => ({
+      id: cat.id,
+      nombre: CATEGORIAS_ES[cat.id] || (await transformador.traducirTexto(cat.name)),
+    }))
+  );
 
   // Guardar en caché
   cache.set(cacheKey, categoriasTraducidas, env.CACHE_CATEGORIAS_TTL);
@@ -105,7 +107,9 @@ export async function obtenerPreguntas({ cantidad = 10, categoria, dificultad })
     throw error;
   }
 
-  const preguntasTransformadas = data.results.map((p) => transformador.transformarPregunta(p));
+  const preguntasTransformadas = await Promise.all(
+    data.results.map((p) => transformador.transformarPregunta(p))
+  );
 
   return {
     total: preguntasTransformadas.length,

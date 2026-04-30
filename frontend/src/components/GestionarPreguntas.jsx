@@ -25,7 +25,7 @@ export default function GestionarPreguntas({ juegoId, juegoTitulo, onClose }) {
   const [nuevaPregunta, setNuevaPregunta] = useState({
     enunciado: "",
     tipo: "multiple",
-    tiempoLimite: 20,
+    tiempoLimite: 10,
   });
 
   // 4 opciones de respuesta
@@ -130,7 +130,7 @@ export default function GestionarPreguntas({ juegoId, juegoTitulo, onClose }) {
       setNuevaPregunta({
         enunciado: "",
         tipo: "multiple",
-        tiempoLimite: 20,
+        tiempoLimite: 10,
       });
       setOpciones([
         { texto: "", esCorrecta: false },
