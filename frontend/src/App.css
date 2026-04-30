@@ -544,6 +544,8 @@ body {
   position: relative;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   border-top: 4px solid var(--color-primary);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .modal-close {
