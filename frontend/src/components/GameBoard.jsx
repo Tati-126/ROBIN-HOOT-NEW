@@ -43,6 +43,8 @@ export default function GameBoard() {
   const [tiempoInicioPregunta, setTiempoInicioPregunta] = useState(null);
   const [juegoFinalizado, setJuegoFinalizado] = useState(false);
   const [rankingFinal, setRankingFinal] = useState([]);
+  const [resultadoRespuesta, setResultadoRespuesta] = useState(null);
+  const [respuestaPendiente, setRespuestaPendiente] = useState(false);
 
   const cargarPreguntasJuego = async (juegoId) => {
     if (!juegoId) return;
@@ -77,6 +79,8 @@ export default function GameBoard() {
     setTiempoRestante(pregunta.tiempoLimite);
     setTiempoInicioPregunta(Date.now());
     setRespondida(false);
+    setRespuestaPendiente(false);
+    setResultadoRespuesta(null);
 
     const interval = setInterval(() => {
       setTiempoRestante((prev) => {
@@ -102,6 +106,29 @@ export default function GameBoard() {
     const onQuestionChanged = ({ preguntaIndex }) => {
       setPreguntaActualIndex(preguntaIndex);
       setRespondida(false);
+      setRespuestaPendiente(false);
+      setResultadoRespuesta(null);
+    };
+    const onAnswerProcessed = (payload) => {
+      if (!payload?.success) {
+        setRespuestaPendiente(false);
+        setResultadoRespuesta({
+          tipo: "error",
+          mensaje: payload?.message || "Tu respuesta no pudo procesarse.",
+        });
+        return;
+      }
+
+      setRespuestaPendiente(false);
+      setRespondida(true);
+      setResultadoRespuesta({
+        tipo: payload.correcta ? "correcta" : "incorrecta",
+        mensaje: payload.correcta
+          ? `Respuesta correcta. Ganaste ${payload.puntosGanados} puntos.`
+          : "Respuesta incorrecta. No sumaste puntos.",
+        puntosGanados: payload.puntosGanados,
+        puntajeTotal: payload.puntajeTotal,
+      });
     };
     const onGameFinished = ({ ranking }) => {
       setJuegoFinalizado(true);
@@ -111,18 +138,21 @@ export default function GameBoard() {
     socket.on("ranking_updated", onRankingUpdated);
     socket.on("session_started", onSessionStarted);
     socket.on("question_changed", onQuestionChanged);
+    socket.on("answer_processed", onAnswerProcessed);
     socket.on("game_finished", onGameFinished);
 
     return () => {
       socket.off("ranking_updated", onRankingUpdated);
       socket.off("session_started", onSessionStarted);
       socket.off("question_changed", onQuestionChanged);
+      socket.off("answer_processed", onAnswerProcessed);
       socket.off("game_finished", onGameFinished);
     };
   }, [sesion]);
 
   const handleResponder = (opcion) => {
-    if (respondida) return;
+    if (respondida || respuestaPendiente) return;
+    setRespuestaPendiente(true);
     const tiempoRespuestaMs = Date.now() - tiempoInicioPregunta;
     socket.emit("submit_answer", {
       sessionId: sesion.sessionId,
@@ -259,6 +289,30 @@ export default function GameBoard() {
                         </button>
                       ))}
                     </div>
+                    {resultadoRespuesta && (
+                      <div
+                        style={{
+                          marginTop: "16px",
+                          padding: "12px 14px",
+                          borderRadius: "12px",
+                          backgroundColor:
+                            resultadoRespuesta.tipo === "correcta"
+                              ? "rgba(34, 197, 94, 0.14)"
+                              : resultadoRespuesta.tipo === "incorrecta"
+                                ? "rgba(239, 68, 68, 0.14)"
+                                : "rgba(245, 158, 11, 0.14)",
+                          color:
+                            resultadoRespuesta.tipo === "correcta"
+                              ? "#166534"
+                              : resultadoRespuesta.tipo === "incorrecta"
+                                ? "#991b1b"
+                                : "#92400e",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {resultadoRespuesta.mensaje}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}
