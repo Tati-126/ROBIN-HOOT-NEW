@@ -333,6 +333,67 @@ export const obtenerOpcionesPorPregunta = async (preguntaId) => {
   }
 };
 
+/**
+ * Guardar el resultado de una maratón en el backend
+ */
+export const guardarResultadoMaraton = async ({ puntaje, aciertos, totalPreguntas, resumen, nombre }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No hay token de autenticación");
+  }
+
+  try {
+    const response = await fetchApi("/api/maraton/resultado", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ puntaje, aciertos, totalPreguntas, resumen, nombre }),
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, `Error al guardar maratón (HTTP ${response.status})`);
+      throw new Error(message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error guardando resultado de maratón:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener ranking global de maratón
+ */
+export const obtenerRankingMaraton = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No hay token de autenticación");
+  }
+
+  try {
+    const response = await fetchApi("/api/maraton/ranking", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, `Error al obtener ranking de maratón (HTTP ${response.status})`);
+      throw new Error(message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error obteniendo ranking de maratón:", error);
+    throw error;
+  }
+};
+
 // ─── FUNCIONES DE GESTIÓN DE PREGUNTAS Y OPCIONES ────────────────────────────
 
 /**

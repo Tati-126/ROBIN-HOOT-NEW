@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { getBackendData, actualizarPerfilUsuario } from "../services/api";
+import { getBackendData, actualizarPerfilUsuario, obtenerRankingMaraton } from "../services/api";
 import socket from "../socket";
 import CustomCard from "../components/ui/CustomCard";
 import MyButton from "../components/ui/MyButton";
@@ -9,6 +9,7 @@ import RankingTable from "../components/RankingTable";
 import GameBoard from "../components/GameBoard";
 import CrearSesion from "../components/CrearSesion.jsx";
 import ImportarTrivia from "../components/ImportarTrivia.jsx";
+import MaratonUpModal from "../components/MaratonUpModal.jsx";
 import { useNavigate } from "react-router-dom";
 import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket, Search } from "lucide-react";
 
@@ -21,18 +22,29 @@ export default function Dashboard() {
   const { usuario, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const [ranking, setRanking] = useState([]);
+  const [rankingMaraton, setRankingMaraton] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMaraton, setLoadingMaraton] = useState(true);
   const [error, setError] = useState(null);
+  const [errorMaraton, setErrorMaraton] = useState(null);
+  const [showMaraton, setShowMaraton] = useState(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const data = await getBackendData();
-        setRanking(data || []);
+        const [dataRanking, dataMaraton] = await Promise.all([
+          getBackendData(),
+          obtenerRankingMaraton(),
+        ]);
+
+        setRanking(dataRanking || []);
+        setRankingMaraton(dataMaraton || []);
       } catch (err) {
         setError(err.message);
+        setErrorMaraton(err.message);
       } finally {
         setLoading(false);
+        setLoadingMaraton(false);
       }
     };
     cargarDatos();
@@ -128,11 +140,6 @@ export default function Dashboard() {
     setBuscandoDuelo(false);
   };
 
-  const handleEmpezarMaraton = () => {
-    alert("¡El modo Maratón UP estará disponible en su versión completa muy pronto! Por ahora, únete a las partidas programadas por tu docente.");
-    document.querySelector('.section-join')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
   const handleDesafioClasico = () => {
     document.querySelector('.section-join')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
@@ -142,6 +149,14 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  const handleOpenMaraton = () => {
+    setShowMaraton(true);
+  };
+
+  const handleCloseMaraton = () => {
+    setShowMaraton(false);
+  };
+
   // Calcular posición del usuario en el ranking
   const posicionUsuario = ranking.findIndex(
     (r) => r.usuarioId === (usuario?._id || usuario?.id)
@@ -149,6 +164,10 @@ export default function Dashboard() {
 
   // Total de jugadores activos en el ranking
   const totalJugadores = ranking.length;
+  const topMaraton = rankingMaraton.slice(0, 5);
+  const posicionMaraton = rankingMaraton.findIndex(
+    (item) => item.usuarioId === (usuario?._id || usuario?.id)
+  ) + 1;
 
   return (
     <div
@@ -235,19 +254,68 @@ export default function Dashboard() {
         </CustomCard>
         <CustomCard variant="yellow" icon={<Star size={32} />} title="Maraton UP">
           <p style={{ marginBottom: "20px", fontSize: "1rem" }}>Demuestra tu resistencia con 50 preguntas seguidas de cultura institucional.</p>
-          <MyButton variant="yellow" fullWidth style={{ padding: "16px" }} onClick={handleEmpezarMaraton} disabled={creandoMaraton}>
-            {creandoMaraton ? "PREPARANDO..." : "EMPEZAR"}
-          </MyButton>
+          <MyButton variant="yellow" fullWidth onClick={handleOpenMaraton} style={{ padding: "16px" }}>EMPEZAR</MyButton>
         </CustomCard>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "40px" }}>
-        {/* Ranking */}
+      <MaratonUpModal isOpen={showMaraton} onClose={handleCloseMaraton} />
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px" }}>
         <CustomCard icon={<Trophy size={32} />} title="Lideres de la Semana" variant="yellow">
           <div style={{ marginTop: "20px" }}>
             {loading && <p style={{ textAlign: "center", padding: "40px" }}>Buscando jugadores estrella...</p>}
             {error && <p style={{ color: "var(--color-error)", textAlign: "center", padding: "20px" }}>Error: {error}</p>}
             {!loading && !error && <RankingTable ranking={ranking} />}
+          </div>
+        </CustomCard>
+
+        <CustomCard icon={<Star size={32} />} title="Ranking Maraton UP" variant="blue">
+          <div style={{ marginTop: "20px" }}>
+            <div style={{ marginBottom: "16px", padding: "12px 14px", borderRadius: "14px", background: "rgba(255,255,255,0.16)", color: "white", fontWeight: "800" }}>
+              {posicionMaraton > 0 ? `Tu posición en la maratón: #${posicionMaraton}` : "Aún no tienes posición en la maratón"}
+            </div>
+            {loadingMaraton && <p style={{ textAlign: "center", padding: "40px" }}>Cargando maratón...</p>}
+            {errorMaraton && <p style={{ color: "var(--color-error)", textAlign: "center", padding: "20px" }}>Error: {errorMaraton}</p>}
+            {!loadingMaraton && !errorMaraton && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {topMaraton.length === 0 ? (
+                  <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "30px 10px" }}>
+                    Aún no hay resultados en la maratón.
+                  </p>
+                ) : (
+                  topMaraton.map((item, index) => (
+                    <div
+                      key={item.usuarioId || index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 14px",
+                        borderRadius: "14px",
+                        background: "rgba(255,255,255,0.9)",
+                        border: index === 0 ? "2px solid var(--color-kahoot-yellow)" : "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: "900" }}>#{index + 1} {item.nombre}</div>
+                        <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+                          {item.aciertos || 0}/{item.totalPreguntas || 0} aciertos · {item.partidas || 0} intentos
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: "900", fontSize: "1.1rem", color: "var(--color-primary)" }}>
+                        {item.puntaje || 0} pts
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            <div style={{ marginTop: "18px" }}>
+              <MyButton variant="yellow" fullWidth onClick={handleOpenMaraton} style={{ padding: "14px" }}>
+                ABRIR MARATÓN
+              </MyButton>
+            </div>
           </div>
         </CustomCard>
       </div>
