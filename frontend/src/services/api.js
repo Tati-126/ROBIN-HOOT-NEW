@@ -161,6 +161,39 @@ export const logout = () => {
 };
 
 /**
+ * Actualizar perfil del usuario
+ */
+export const actualizarPerfilUsuario = async (id, datos) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No hay token de autenticación");
+
+  try {
+    const response = await fetchApi(`/api/usuarios/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+      const message = await parseErrorMessage(response, "Error al actualizar perfil");
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    // Actualizar datos locales
+    const usuarioLocal = JSON.parse(localStorage.getItem("usuario") || "{}");
+    localStorage.setItem("usuario", JSON.stringify({ ...usuarioLocal, ...datos }));
+    return data;
+  } catch (error) {
+    console.error("[API] Error al actualizar perfil:", error);
+    throw error;
+  }
+};
+
+/**
  * Crear una sesion de juego (genera PIN) — requiere autenticación DOCENTE o ADMIN
  */
 export const crearSesion = async (juegoId, creadorId) => {

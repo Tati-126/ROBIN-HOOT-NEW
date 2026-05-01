@@ -26,7 +26,7 @@ const getColorVariant = (index) => {
 /**
  * GameBoard - Unirse a una partida por PIN con sala de espera en tiempo real
  */
-export default function GameBoard() {
+export default function GameBoard({ prefillPin, autoJoin }) {
   const { usuario } = useAuth();
   const [pin, setPin] = useState("");
   const [nickname, setNickname] = useState("");
@@ -45,6 +45,57 @@ export default function GameBoard() {
   const [rankingFinal, setRankingFinal] = useState([]);
   const [resultadoRespuesta, setResultadoRespuesta] = useState(null);
   const [respuestaPendiente, setRespuestaPendiente] = useState(false);
+
+  // Pre-llenar datos
+  useEffect(() => {
+    if (usuario?.nombre && !nickname) {
+      setNickname(usuario.nombre);
+    }
+  }, [usuario]);
+
+  useEffect(() => {
+    if (prefillPin) {
+      setPin(prefillPin);
+    }
+  }, [prefillPin]);
+
+  const ejecutarUnirse = async (p, n) => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await unirseASesion(p, n, usuario?._id || usuario?.id);
+      const { sessionId, participantId, juegoId, estado } = result.data;
+      setSesion({ sessionId, participantId, juegoId });
+
+      if (estado === "ACTIVA") {
+        setIniciada(true);
+        await cargarPreguntasJuego(juegoId);
+      }
+
+      socket.emit("join_session", {
+        pin: p,
+        usuarioId: usuario?._id || usuario?.id || `guest_${Date.now()}`,
+        nombre: n,
+      });
+    } catch (err) {
+      setError(err.message || "PIN inválido o sesión no encontrada");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-join si se provee la prop autoJoin
+  useEffect(() => {
+    if (autoJoin && prefillPin && nickname && !loading && !sesion) {
+      ejecutarUnirse(prefillPin, nickname);
+    }
+  }, [autoJoin, prefillPin, nickname]);
 
   const cargarPreguntasJuego = async (juegoId) => {
     if (!juegoId) return;
@@ -169,42 +220,7 @@ export default function GameBoard() {
     e.preventDefault();
     if (!pin.trim()) return setError("Ingresa un PIN válido");
     if (!nickname.trim()) return setError("Ingresa tu nickname");
-    
-    // Intentar activar pantalla completa al hacer clic (interacción del usuario)
-    try {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-    } catch (e) {
-      // Ignorar errores si no se puede
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await unirseASesion(
-        pin.trim(),
-        nickname.trim(),
-        usuario?._id || usuario?.id
-      );
-      const { sessionId, participantId, juegoId, estado } = result.data;
-      setSesion({ sessionId, participantId, juegoId });
-
-      if (estado === "ACTIVA") {
-        setIniciada(true);
-        await cargarPreguntasJuego(juegoId);
-      }
-
-      socket.emit("join_session", {
-        pin: pin.trim(),
-        usuarioId: usuario?._id || usuario?.id || `guest_${Date.now()}`,
-        nombre: nickname.trim(),
-      });
-    } catch (err) {
-      setError(err.message || "PIN inválido o sesión no encontrada");
-    } finally {
-      setLoading(false);
-    }
+    await ejecutarUnirse(pin.trim(), nickname.trim());
   };
 
   // Sala de espera / juego activo
@@ -407,6 +423,40 @@ export default function GameBoard() {
     if (iniciada) {
       return (
         <div className="fullscreen-game-overlay">
+          {/* Botón para salir en cualquier momento */}
+          <button 
+             onClick={() => {
+               if (window.confirm("¿Seguro que quieres abandonar la partida?")) {
+                 if (sesion && sesion.sessionId) {
+                   socket.emit("leave_session", { sessionId: sesion.sessionId });
+                 }
+                 setSesion(null);
+                 setIniciada(false);
+                 setJuegoFinalizado(false);
+                 setPreguntasJuego([]);
+                 setPreguntaActualIndex(0);
+                 if (document.fullscreenElement) {
+                   document.exitFullscreen().catch(() => {});
+                 }
+               }
+             }}
+             style={{ 
+               position: 'absolute', 
+               top: '20px', 
+               right: '20px', 
+               zIndex: 1000, 
+               padding: '10px 16px', 
+               background: 'rgba(255, 0, 0, 0.8)', 
+               border: '2px solid white', 
+               color: 'white', 
+               borderRadius: '8px', 
+               cursor: 'pointer', 
+               fontWeight: 'bold',
+               boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+             }}
+          >
+             SALIR DEL JUEGO
+          </button>
           <div className="fullscreen-game-container">
             {gameContent}
           </div>

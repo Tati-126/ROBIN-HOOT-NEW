@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { getBackendData } from "../services/api";
+import { getBackendData, actualizarPerfilUsuario } from "../services/api";
+import socket from "../socket";
 import CustomCard from "../components/ui/CustomCard";
 import MyButton from "../components/ui/MyButton";
+import Modal from "../components/ui/Modal";
 import RankingTable from "../components/RankingTable";
 import GameBoard from "../components/GameBoard";
 import CrearSesion from "../components/CrearSesion.jsx";
 import ImportarTrivia from "../components/ImportarTrivia.jsx";
 import { useNavigate } from "react-router-dom";
-import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket } from "lucide-react";
+import { User, Trophy, Star, Activity, LogOut, Settings, Gamepad2, Rocket, Search } from "lucide-react";
 
 import dashboardBackground from "../assets/backgrounds/ITP.2.jpeg";
 
@@ -35,6 +37,105 @@ export default function Dashboard() {
     };
     cargarDatos();
   }, []);
+
+  // Manejo de Desafíos
+  const [buscandoDuelo, setBuscandoDuelo] = useState(false);
+  const [creandoMaraton, setCreandoMaraton] = useState(false);
+  const [prefillPin, setPrefillPin] = useState("");
+
+  // Manejo de Perfil
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editNombre, setEditNombre] = useState(usuario?.nombre || "");
+  const [actualizandoPerfil, setActualizandoPerfil] = useState(false);
+
+  const handleOpenEditProfile = () => {
+    setEditNombre(usuario?.nombre || "");
+    setEditProfileOpen(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!editNombre.trim()) return alert("El nombre no puede estar vacío");
+    setActualizandoPerfil(true);
+    try {
+      await actualizarPerfilUsuario(usuario?._id || usuario?.id, { nombre: editNombre.trim() });
+      alert("Perfil actualizado correctamente. Los cambios se verán reflejados por completo tras recargar la página.");
+      setEditProfileOpen(false);
+      // Forzar un reload simple para que todos los contextos tomen el nuevo nombre, o depender del AuthContext si fuera reactivo
+      window.location.reload();
+    } catch (err) {
+      alert(err.message || "Error al actualizar perfil");
+    } finally {
+      setActualizandoPerfil(false);
+    }
+  };
+
+  useEffect(() => {
+    const onDuelFound = ({ pin }) => {
+      setBuscandoDuelo(false);
+      setPrefillPin(pin);
+      setTimeout(() => {
+        document.querySelector('.section-join')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    };
+    
+    const onDuelError = ({ message }) => {
+      setBuscandoDuelo(false);
+      alert("Error al buscar duelo: " + message);
+    };
+
+    const onMarathonReady = ({ pin }) => {
+      // Ya no se usa, pero lo dejamos por si acaso
+      setCreandoMaraton(false);
+    };
+    
+    const onMarathonError = ({ message }) => {
+      setCreandoMaraton(false);
+      alert("Error al iniciar maratón: " + message);
+    };
+
+    socket.on("duel_found", onDuelFound);
+    socket.on("duel_error", onDuelError);
+    socket.on("marathon_ready", onMarathonReady);
+    socket.on("marathon_error", onMarathonError);
+
+    return () => {
+      socket.off("duel_found", onDuelFound);
+      socket.off("duel_error", onDuelError);
+      socket.off("marathon_ready", onMarathonReady);
+      socket.off("marathon_error", onMarathonError);
+    };
+  }, []);
+
+  const handleBuscarDuelo = () => {
+    setBuscandoDuelo(true);
+    socket.emit("find_duel", { usuarioId: usuario?._id || usuario?.id, nombre: usuario?.nombre || "Jugador" });
+    
+    // Timeout de seguridad por si el backend no responde (ej. falta reiniciar el servidor)
+    setTimeout(() => {
+      setBuscandoDuelo(prev => {
+        if (prev) {
+          alert("El servidor tardó demasiado en responder. Asegúrate de haber reiniciado tu backend.");
+          return false;
+        }
+        return prev;
+      });
+    }, 7000);
+  };
+
+  const handleCancelarDuelo = () => {
+    socket.emit("cancel_duel");
+    setBuscandoDuelo(false);
+  };
+
+  const handleEmpezarMaraton = () => {
+    alert("¡El modo Maratón UP estará disponible en su versión completa muy pronto! Por ahora, únete a las partidas programadas por tu docente.");
+    document.querySelector('.section-join')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const handleDesafioClasico = () => {
+    document.querySelector('.section-join')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const handleLogout = () => {
     cerrarSesion();
@@ -98,7 +199,7 @@ export default function Dashboard() {
             <p style={{ fontSize: "1.1rem" }}><strong>Nombre:</strong> {usuario?.nombre}</p>
             <p style={{ fontSize: "1.1rem" }}><strong>Email:</strong> {usuario?.email}</p>
             <p><small style={{ opacity: 0.6, fontSize: "0.9rem" }}>ID: {usuario?._id || "UP-USER"}</small></p>
-            <MyButton variant="secondary" style={{ marginTop: "15px", padding: "12px" }}>
+            <MyButton variant="secondary" onClick={handleOpenEditProfile} style={{ marginTop: "15px", padding: "12px" }}>
               <Settings size={20} style={{ marginRight: "10px" }} /> Editar Perfil
             </MyButton>
           </div>
@@ -106,7 +207,7 @@ export default function Dashboard() {
 
         {/* Join Game - Yellow */}
         <div className="section-join">
-          <GameBoard />
+          <GameBoard prefillPin={prefillPin} autoJoin={!!prefillPin} />
         </div>
         
         {/* Crear Partida (docente) - Red */}
@@ -126,15 +227,17 @@ export default function Dashboard() {
       <div className="dashboard-challenges-grid">
         <CustomCard variant="red" icon={<Gamepad2 size={32} />} title="Desafio Clasico">
           <p style={{ marginBottom: "20px", fontSize: "1rem" }}>El quiz de toda la vida. Responde rapido y gana puntos para tu racha.</p>
-          <MyButton variant="red" fullWidth style={{ padding: "16px" }}>¡JUGAR YA!</MyButton>
+          <MyButton variant="red" fullWidth style={{ padding: "16px" }} onClick={handleDesafioClasico}>¡JUGAR YA!</MyButton>
         </CustomCard>
         <CustomCard variant="blue" icon={<Trophy size={32} />} title="Duelo de Sabios">
           <p style={{ marginBottom: "20px", fontSize: "1rem" }}>Compite 1 vs 1 contra un compañero de tu misma facultad en tiempo real.</p>
-          <MyButton variant="blue" fullWidth style={{ padding: "16px" }}>BUSCAR RIVAL</MyButton>
+          <MyButton variant="blue" fullWidth style={{ padding: "16px" }} onClick={handleBuscarDuelo}>BUSCAR RIVAL</MyButton>
         </CustomCard>
         <CustomCard variant="yellow" icon={<Star size={32} />} title="Maraton UP">
           <p style={{ marginBottom: "20px", fontSize: "1rem" }}>Demuestra tu resistencia con 50 preguntas seguidas de cultura institucional.</p>
-          <MyButton variant="yellow" fullWidth style={{ padding: "16px" }}>EMPEZAR</MyButton>
+          <MyButton variant="yellow" fullWidth style={{ padding: "16px" }} onClick={handleEmpezarMaraton} disabled={creandoMaraton}>
+            {creandoMaraton ? "PREPARANDO..." : "EMPEZAR"}
+          </MyButton>
         </CustomCard>
       </div>
 
@@ -156,6 +259,51 @@ export default function Dashboard() {
         </MyButton>
       </div>
       </div>
+
+      {/* Modal Buscando Duelo */}
+      <Modal isOpen={buscandoDuelo} onClose={handleCancelarDuelo} title="Duelo de Sabios">
+        <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <style>{`
+            @keyframes pulse-search {
+              0% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.2); opacity: 0.7; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+          <Search size={64} style={{ color: "var(--color-kahoot-blue)", animation: "pulse-search 1.5s infinite", marginBottom: "20px" }} />
+          <p style={{ fontSize: "1.1rem", marginBottom: "30px", fontWeight: "600" }}>Buscando a un rival digno en la base de datos...</p>
+          <MyButton variant="danger" onClick={handleCancelarDuelo}>CANCELAR BÚSQUEDA</MyButton>
+        </div>
+      </Modal>
+
+      {/* Modal Editar Perfil */}
+      <Modal isOpen={editProfileOpen} onClose={() => setEditProfileOpen(false)}>
+        <h2 style={{ marginBottom: "20px", color: "var(--color-primary-dark)" }}>Editar Perfil</h2>
+        <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Nombre Completo</label>
+            <input 
+              type="text" 
+              value={editNombre}
+              onChange={(e) => setEditNombre(e.target.value)}
+              style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #ccc" }}
+              disabled={actualizandoPerfil}
+            />
+          </div>
+          <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
+            El email ({usuario?.email}) no se puede modificar por seguridad.
+          </p>
+          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+            <MyButton type="submit" variant="primary" fullWidth disabled={actualizandoPerfil}>
+              {actualizandoPerfil ? "GUARDANDO..." : "GUARDAR CAMBIOS"}
+            </MyButton>
+            <MyButton type="button" variant="secondary" fullWidth onClick={() => setEditProfileOpen(false)}>
+              CANCELAR
+            </MyButton>
+          </div>
+        </form>
+      </Modal>
+
     </div>
   );
 }
