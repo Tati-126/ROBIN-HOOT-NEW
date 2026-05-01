@@ -1,6 +1,19 @@
 import * as sessionService from "./session.service.js";
 import Session from "./session.model.js";
 import Pregunta from "../../models/Pregunta.js";
+import Juego from "../../models/Juego.js";
+import OpcionRespuesta from "../../models/OpcionRespuesta.js";
+
+/**
+ * Cola de jugadores esperando un duelo 1 vs 1.
+ */
+const matchmakingQueue = [];
+
+/**
+ * Registro de sesiones que deben iniciar automáticamente (Duelo = 2, Maratón = 1).
+ * sessionId -> { playersNeeded: number, joined: number }
+ */
+const autoStartSessions = new Map();
 
 /**
  * Map que almacena los timers de transición de preguntas por sessionId.
@@ -138,6 +151,32 @@ export const initSocket = (io) => {
                 io.to(room).emit("ranking_updated", { ranking });
 
                 console.log(`[Socket] ${nombre} se unió a la sesión ${session._id}`);
+
+                // ── Lógica de Auto-Start para Duelos y Maratones ──
+                const sessionIdStr = session._id.toString();
+                if (autoStartSessions.has(sessionIdStr)) {
+                    const sessionData = autoStartSessions.get(sessionIdStr);
+                    sessionData.joined += 1;
+                    
+                    if (sessionData.joined >= sessionData.playersNeeded) {
+                        console.log(`[Socket] Iniciando automáticamente sesión ${sessionIdStr}...`);
+                        autoStartSessions.delete(sessionIdStr);
+                        
+                        setTimeout(async () => {
+                            try {
+                                await sessionService.startSession(sessionIdStr);
+                                io.to(room).emit("session_started", {
+                                    sessionId: sessionIdStr,
+                                    startedAt: new Date(),
+                                });
+                                // Lanzar primera pregunta automáticamente
+                                await handleNextQuestion(io, sessionIdStr, 0);
+                            } catch (e) {
+                                console.error(`[Socket] Error en auto-start:`, e);
+                            }
+                        }, 2000); // 2 segundos de pausa para cargar la sala antes de jugar
+                    }
+                }
             } catch (error) {
                 socket.emit("session_joined", {
                     success: false,
@@ -213,9 +252,165 @@ export const initSocket = (io) => {
             await handleNextQuestion(io, sessionId, preguntaIndex);
         });
 
+        // ── find_duel (1 vs 1 Matchmaking) ──────────────────────────────────────
+        socket.on("find_duel", async ({ usuarioId, nombre }) => {
+            console.log(`[Socket] ${nombre} buscando duelo...`);
+            
+            // Evitar duplicados en la cola
+            const existingIndex = matchmakingQueue.findIndex(p => p.usuarioId === usuarioId || p.socketId === socket.id);
+            if (existingIndex !== -1) {
+                matchmakingQueue.splice(existingIndex, 1);
+            }
+
+            matchmakingQueue.push({ socketId: socket.id, usuarioId, nombre, socket });
+
+            // Si hay 2 o más jugadores, emparejarlos
+            if (matchmakingQueue.length >= 2) {
+                const p1 = matchmakingQueue.shift();
+                const p2 = matchmakingQueue.shift();
+
+                try {
+                    // Seleccionar 10 preguntas aleatorias de toda la base de datos
+                    const randomPreguntas = await Pregunta.aggregate([{ $sample: { size: 10 } }]);
+                    if (!randomPreguntas || randomPreguntas.length === 0) {
+                         p1.socket.emit("duel_error", { message: "No hay preguntas en la base de datos para el duelo." });
+                         p2.socket.emit("duel_error", { message: "No hay preguntas en la base de datos para el duelo." });
+                         return;
+                    }
+                    
+                    const creadorId = p1.usuarioId || "60d5ecb54cb9cb25f8aa9999";
+                    
+                    // Crear juego temporal para el duelo
+                    const tempGame = await Juego.create({
+                        titulo: `Duelo de Sabios - ${Date.now()}`,
+                        descripcion: "Modo Duelo 1 vs 1 autogenerado",
+                        creadorId,
+                        estado: "PUBLICADO"
+                    });
+
+                    // Clonar preguntas y opciones
+                    for (const p of randomPreguntas) {
+                        const nuevaPregunta = await Pregunta.create({
+                            enunciado: p.enunciado,
+                            tipo: p.tipo,
+                            tiempoLimite: 15,
+                            juegoId: tempGame._id
+                        });
+                        const opciones = await OpcionRespuesta.find({ preguntaId: p._id });
+                        for (const op of opciones) {
+                            await OpcionRespuesta.create({
+                                texto: op.texto,
+                                esCorrecta: op.esCorrecta,
+                                preguntaId: nuevaPregunta._id
+                            });
+                        }
+                    }
+                    
+                    // Crear sesión para el duelo
+                    const session = await sessionService.createSession(tempGame._id, creadorId);
+                    
+                    // Registrar para auto-start (necesita 2 jugadores)
+                    autoStartSessions.set(session._id.toString(), { playersNeeded: 2, joined: 0 });
+                    
+                    const matchData = {
+                        pin: session.pin,
+                        sessionId: session._id,
+                        juegoId: tempGame._id,
+                    };
+
+                    p1.socket.emit("duel_found", matchData);
+                    p2.socket.emit("duel_found", matchData);
+
+                    console.log(`[Socket] ¡Duelo creado! PIN: ${session.pin} entre ${p1.nombre} y ${p2.nombre}`);
+                } catch (error) {
+                    console.error("Error creating duel", error);
+                    p1.socket.emit("duel_error", { message: error.message || "Error interno" });
+                    p2.socket.emit("duel_error", { message: error.message || "Error interno" });
+                }
+            } else {
+                // Notificar que está en espera
+                socket.emit("duel_waiting");
+            }
+        });
+
+        // ── cancel_duel ─────────────────────────────────────────────────────────
+        socket.on("cancel_duel", () => {
+            const index = matchmakingQueue.findIndex(p => p.socketId === socket.id);
+            if (index !== -1) {
+                matchmakingQueue.splice(index, 1);
+                console.log(`[Socket] Búsqueda de duelo cancelada para ${socket.id}`);
+            }
+        });
+
+        // ── start_marathon ──────────────────────────────────────────────────────
+        socket.on("start_marathon", async ({ usuarioId }) => {
+            try {
+                // Obtener 50 preguntas aleatorias de toda la base de datos
+                const randomPreguntas = await Pregunta.aggregate([{ $sample: { size: 50 } }]);
+                
+                if (!randomPreguntas || randomPreguntas.length === 0) {
+                    socket.emit("marathon_error", { message: "No hay preguntas en la base de datos." });
+                    return;
+                }
+
+                const creadorId = usuarioId || "60d5ecb54cb9cb25f8aa9999";
+
+                // Crear un juego temporal para esta maratón
+                const tempGame = await Juego.create({
+                    titulo: `Maratón UP - ${Date.now()}`,
+                    descripcion: "Modo Maratón autogenerado (Single Player)",
+                    creadorId,
+                    estado: "PUBLICADO"
+                });
+
+                // Clonar las preguntas al juego temporal con 12s de tiempo límite
+                for (const p of randomPreguntas) {
+                    const nuevaPregunta = await Pregunta.create({
+                        enunciado: p.enunciado,
+                        tipo: p.tipo,
+                        tiempoLimite: 12, // 12 SEGUNDOS EXACTOS COMO PIDIÓ EL USUARIO
+                        juegoId: tempGame._id
+                    });
+
+                    // Clonar las opciones de la pregunta original
+                    const opciones = await OpcionRespuesta.find({ preguntaId: p._id });
+                    for (const op of opciones) {
+                        await OpcionRespuesta.create({
+                            texto: op.texto,
+                            esCorrecta: op.esCorrecta,
+                            preguntaId: nuevaPregunta._id
+                        });
+                    }
+                }
+
+                // Crear sesión con el nuevo juego temporal
+                const session = await sessionService.createSession(tempGame._id, creadorId);
+                
+                // Registrar para auto-start (necesita 1 jugador)
+                autoStartSessions.set(session._id.toString(), { playersNeeded: 1, joined: 0 });
+
+                socket.emit("marathon_ready", { pin: session.pin, sessionId: session._id });
+                console.log(`[Socket] Maratón iniciada con PIN: ${session.pin} - ${randomPreguntas.length} preguntas generadas.`);
+            } catch (error) {
+                console.error("Error starting marathon", error);
+                socket.emit("marathon_error", { message: error.message || "Error interno del servidor" });
+            }
+        });
+
+        // ── leave_session ───────────────────────────────────────────────────────
+        socket.on("leave_session", ({ sessionId }) => {
+            console.log(`[Socket] Usuario abandonó la sesión ${sessionId}. Deteniendo timers.`);
+            clearQuestionTimer(sessionId);
+        });
+
         // ── disconnect ──────────────────────────────────────────────────────────
         socket.on("disconnect", () => {
             console.log(`[Socket] Cliente desconectado: ${socket.id}`);
+            // Quitar de la cola de duelos si estaba esperando
+            const index = matchmakingQueue.findIndex(p => p.socketId === socket.id);
+            if (index !== -1) {
+                matchmakingQueue.splice(index, 1);
+            }
         });
     });
 };
