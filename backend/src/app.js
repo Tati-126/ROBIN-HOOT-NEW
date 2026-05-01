@@ -15,6 +15,7 @@ import preguntaRoutes from "./routes/preguntaRoutes.js";
 import opcionRespuestaRoutes from "./routes/opcionRespuestaRoutes.js";
 import juegoRoutes from "./routes/juegoRoutes.js";
 import rankingRoutes from "./routes/rankingRoutes.js";
+import maratonRoutes from "./routes/maratonRoutes.js";
 import rolRoutes from "./routes/rolRoutes.js";
 import setupRoutes from "./routes/setupRoutes.js";
 
@@ -104,6 +105,7 @@ app.use("/api/preguntas", preguntaRoutes);
 app.use("/api/opciones", opcionRespuestaRoutes);
 app.use("/api/juegos", juegoRoutes);
 app.use("/api/ranking", rankingRoutes);
+app.use("/api/maraton", maratonRoutes);
 app.use("/api/roles", rolRoutes);
 app.use("/api/setup", setupRoutes);
 
