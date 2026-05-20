@@ -8,11 +8,11 @@ export default defineConfig({
         // Proxy para evitar CORS en desarrollo local
         proxy: {
             "/api": {
-                target: "http://localhost:5001",
+                target: "http://localhost:5000",
                 changeOrigin: true,
             },
             "/socket.io": {
-                target: "http://localhost:5001",
+                target: "http://localhost:5000",
                 changeOrigin: true,
                 ws: true,
             },
@@ -21,5 +21,13 @@ export default defineConfig({
                 changeOrigin: true,
             },
         },
+    },
+    test: {
+        // Simula el entorno del navegador (DOM) en Node.js
+        environment: "jsdom",
+        // Permite usar describe/it/expect sin importarlos en cada archivo
+        globals: true,
+        // Carga los matchers de jest-dom (toBeInTheDocument, etc.) antes de cada test
+        setupFiles: "./src/test/setup.js",
     },
 });
