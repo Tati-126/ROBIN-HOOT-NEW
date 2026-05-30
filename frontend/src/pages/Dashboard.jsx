@@ -21,6 +21,7 @@ import dashboardBackground from "../assets/backgrounds/ITP.2.jpeg";
 export default function Dashboard() {
   const { usuario, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const esDocente = usuario?.rol === "DOCENTE";
   const [ranking, setRanking] = useState([]);
   const [rankingMaraton, setRankingMaraton] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,9 +237,11 @@ export default function Dashboard() {
       </div>
 
       {/* Sección secundaria - ImportarTrivia - Blue */}
-      <div className="section-import" style={{ marginBottom: "50px" }}>
-        <ImportarTrivia />
-      </div>
+      {esDocente && (
+        <div className="section-import" style={{ marginBottom: "50px" }}>
+          <ImportarTrivia />
+        </div>
+      )}
 
       <h2 className="dashboard-section-title">
         <Rocket size={40} className="title-icon" /> Panel de Desafios
