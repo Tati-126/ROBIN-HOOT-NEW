@@ -23,6 +23,13 @@ const autoStartSessions = new Map();
 const questionTimers = new Map();
 
 /**
+ * Map de transiciones pendientes después de una respuesta.
+ * Evita programar múltiples avances para la misma pregunta.
+ * @type {Map<string, NodeJS.Timeout>}
+ */
+const advanceTimers = new Map();
+
+/**
  * Limpia el timeout de transición de pregunta para una sesión.
  * @param {string} sessionId
  */
@@ -31,6 +38,18 @@ const clearQuestionTimer = (sessionId) => {
     if (timer) {
         clearTimeout(timer);
         questionTimers.delete(sessionId);
+    }
+};
+
+/**
+ * Limpia el timeout de transición posterior a una respuesta.
+ * @param {string} sessionId
+ */
+const clearAdvanceTimer = (sessionId) => {
+    const timer = advanceTimers.get(sessionId);
+    if (timer) {
+        clearTimeout(timer);
+        advanceTimers.delete(sessionId);
     }
 };
 
@@ -54,6 +73,7 @@ const handleNextQuestion = async (io, sessionId, preguntaIndex) => {
 
         // Limpiar timer previo si existe
         clearQuestionTimer(sessionId);
+        clearAdvanceTimer(sessionId);
 
         const preguntas = await Pregunta.find({ juegoId: session.juegoId });
         console.log(`[handleNextQuestion] Total de preguntas: ${preguntas.length}, índice solicitado: ${preguntaIndex}`);
@@ -233,6 +253,26 @@ export const initSocket = (io) => {
                 const ranking = await sessionService.getRanking(sessionId);
                 io.to(room).emit("ranking_updated", { ranking });
 
+                // Programar el avance automático 5 segundos después de la primera respuesta.
+                // Si ya hay un avance programado, no lo duplicamos.
+                if (!advanceTimers.has(sessionId)) {
+                    const currentSession = await Session.findById(sessionId).select(
+                        "currentQuestionIndex currentQuestionId"
+                    );
+
+                    if (currentSession?.currentQuestionId) {
+                        clearQuestionTimer(sessionId);
+
+                        const nextIndex = (currentSession.currentQuestionIndex ?? 0) + 1;
+                        const nextQuestionTimer = setTimeout(async () => {
+                            advanceTimers.delete(sessionId);
+                            await handleNextQuestion(io, sessionId, nextIndex);
+                        }, 5000);
+
+                        advanceTimers.set(sessionId, nextQuestionTimer);
+                    }
+                }
+
                 console.log(
                     `[Socket] ✅ Respuesta registrada: participante ${participantId} – puntos: ${answer.puntosGanados}`
                 );
@@ -401,6 +441,7 @@ export const initSocket = (io) => {
         socket.on("leave_session", ({ sessionId }) => {
             console.log(`[Socket] Usuario abandonó la sesión ${sessionId}. Deteniendo timers.`);
             clearQuestionTimer(sessionId);
+            clearAdvanceTimer(sessionId);
         });
 
         // ── disconnect ──────────────────────────────────────────────────────────

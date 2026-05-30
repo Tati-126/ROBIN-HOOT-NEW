@@ -276,6 +276,18 @@ export const submitAnswer = async ({
         throw err;
     }
 
+    const existingAnswer = await Answer.findOne({
+        sessionId,
+        participantId,
+        preguntaId,
+    });
+
+    if (existingAnswer) {
+        const err = new Error("Ya respondiste esta pregunta");
+        err.statusCode = 400;
+        throw err;
+    }
+
     const puntosGanados = correcta
         ? calculateScore(session, timeReceived)
         : 0;

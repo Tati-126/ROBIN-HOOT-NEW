@@ -33,14 +33,15 @@ export default function LandingPage() {
             fontWeight: "700",
             marginBottom: "24px",
             border: "1px solid rgba(255,255,255,0.2)",
-            textTransform: "uppercase"
+            textTransform: "uppercase",
+            textShadow: "0 2px 6px rgba(0,0,0,0.85), 0 0 1px rgba(0,0,0,0.9)"
           }}>
             ☘ Plataforma oficial #1 de la UP
           </div>
-          <h1 style={{ fontSize: "4.5rem", fontWeight: "900", textShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
+          <h1 style={{ fontSize: "4.5rem", fontWeight: "900", textShadow: "0 8px 24px rgba(0,0,0,0.75), 0 2px 6px rgba(0,0,0,0.9)" }}>
             Robin HOOT
           </h1>
-          <p style={{ fontSize: "1.6rem", fontWeight: "600", marginBottom: "50px", opacity: 0.95 }}>
+          <p style={{ fontSize: "1.6rem", fontWeight: "600", marginBottom: "50px", opacity: 0.95, textShadow: "0 3px 10px rgba(0,0,0,0.8), 0 0 1px rgba(0,0,0,0.9)" }}>
             Donde el conocimiento de la UP cobra vida en tiempo real.
           </p>
           <div style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
